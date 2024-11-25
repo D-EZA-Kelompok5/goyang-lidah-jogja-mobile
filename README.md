@@ -6,34 +6,6 @@
 - **Vissuta Gunawan Lim** - 2306214656
 - **Rakabima Ghaniendra Rusdianto** - 2306228472 
 
-**Tautan Deployment Aplikasi (Django) :**  http://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id
-
-# Integrasi Django dan Flutter
-
-Aplikasi **GoyangLidahJogja** mengintegrasikan **Django** sebagai backend dan **Flutter** sebagai frontend untuk menyediakan platform kuliner terbaik di Yogyakarta. Berikut adalah penjelasan singkat mengenai integrasinya:
-
-## Cara Kerja Integrasi
-
-1. **Flutter (Frontend)**
-   - Flutter mengirim **request** ke backend Django melalui endpoint API.
-   - Data yang diterima dari Django (dalam format JSON/XML) akan diolah dan ditampilkan di aplikasi mobile.
-
-2. **Django (Backend)**
-   - Django menerima request dari Flutter.
-   - Django menggunakan **Model** untuk mengambil data dari database.
-   - Data diubah ke format JSON/XML menggunakan **Serializers**.
-   - Django mengembalikan **response** ke Flutter.
-
-3. **Internet sebagai Perantara**
-   - Semua komunikasi antara Flutter dan Django dilakukan melalui protokol HTTP/HTTPS.
-
-## Alur Kerja Sederhana
-1. Pengguna melakukan aksi di aplikasi Flutter, seperti mencari restoran.
-2. Flutter mengirim request ke endpoint API Django .
-3. Django memproses request dan mengambil data dari database.
-4. Django mengirim data restoran ke Flutter dalam format JSON.
-5. Flutter menampilkan data tersebut di aplikasi.
-
 # GoyangLidahJogja
 
 GoyangLidahJogja adalah platform online yang dirancang untuk memudahkan Anda dalam menjelajahi, menemukan, dan menikmati ragam kuliner terbaik yang ada di Yogyakarta. Kami menyediakan informasi lengkap, rekomendasi akurat, dan ulasan jujur dari para pecinta kuliner dan komunitas lokal. Baik Anda seorang wisatawan yang ingin menikmati cita rasa khas Jogja atau penduduk lokal yang mencari referensi tempat makan baru, GoyangLidahJogja siap membantu Anda menemukan sajian kuliner yang memanjakan lidah.
@@ -88,7 +60,7 @@ GoyangLidahJogja menawarkan rekomendasi kuliner yang dipersonalisasi berdasarkan
    Restaurant owner dapat menambah, mengubah, dan menghapus menu pada restoran.
 #### Dikerjakan oleh: Vissuta Gunawan Lim
 
-## Role & Permissions
+## Role & Permissions (Peran/Aktor Pengguna Aplikasi)
 
 - **Admin**: 
   - Tambah/Hapus Informasi Event
@@ -106,13 +78,46 @@ GoyangLidahJogja menawarkan rekomendasi kuliner yang dipersonalisasi berdasarkan
   - Memberikan announcement terkait restoran
   - Mengedit detail restoran (khusus untuk restoran yang dimiliki)
 
+
+# Integrasi Django dan Flutter
+
+Aplikasi **GoyangLidahJogja** mengintegrasikan **Django** sebagai backend dan **Flutter** sebagai frontend untuk menyediakan platform kuliner terbaik di Yogyakarta. Berikut adalah penjelasan singkat mengenai integrasinya:
+
+## Cara Kerja Integrasi
+
+1. **Flutter (Frontend)**
+   - Flutter mengirim **request** ke backend Django melalui endpoint API.
+   - Data yang diterima dari Django (dalam format JSON/XML) akan diolah dan ditampilkan di aplikasi mobile.
+
+2. **Django (Backend)**
+   - Django menerima request dari Flutter.
+   - Django menggunakan **Model** untuk mengambil data dari database.
+   - Data diubah ke format JSON/XML menggunakan **Serializers**.
+   - Django mengembalikan **response** ke Flutter.
+
+3. **Internet sebagai Perantara**
+   - Semua komunikasi antara Flutter dan Django dilakukan melalui protokol HTTP/HTTPS.
+
+## Alur Kerja Sederhana
+1. Pengguna melakukan aksi di aplikasi Flutter, seperti mencari restoran.
+2. Flutter mengirim request ke endpoint API Django .
+3. Django memproses request dan mengambil data dari database.
+4. Django mengirim data restoran ke Flutter dalam format JSON.
+5. Flutter menampilkan data tersebut di aplikasi.
+
 ## Sumber Initial Dataset
 
 - [Google Sheets - Data Restoran](https://docs.google.com/spreadsheets/d/1CiyTyo6Z4WJ6JniwLJ9oCfMEon323hIYjYlfqgFiw_0/edit?usp=sharing)
 - [Trip Advisor - Restoran di Yogyakarta](https://www.tripadvisor.co.id/Restaurants-g14782503-Yogyakarta_Yogyakarta_Region_Java.html)
+
+## Tautan Deployment Aplikasi (Django) :
+
+http://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id
+
 
 ## Kontak
 
 Jika Anda memiliki pertanyaan atau ingin berkolaborasi dengan kami, jangan ragu untuk menghubungi kami melalui:
 - **Email**: contact@goyanglidahjogja.com
 - **Instagram**: [@GoyangLidahJogja](https://instagram.com/GoyangLidahJogja)
+
