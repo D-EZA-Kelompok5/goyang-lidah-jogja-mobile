@@ -29,7 +29,7 @@ Aplikasi **GoyangLidahJogja** mengintegrasikan **Django** sebagai backend dan **
 
 ## Alur Kerja Sederhana
 1. Pengguna melakukan aksi di aplikasi Flutter, seperti mencari restoran.
-2. Flutter mengirim request ke endpoint API Django (contoh: `https://example.com/api/restaurants`).
+2. Flutter mengirim request ke endpoint API Django .
 3. Django memproses request dan mengambil data dari database.
 4. Django mengirim data restoran ke Flutter dalam format JSON.
 5. Flutter menampilkan data tersebut di aplikasi.
