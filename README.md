@@ -87,16 +87,19 @@ Aplikasi **GoyangLidahJogja** mengintegrasikan **Django** sebagai backend dan **
 
 1. **Flutter (Frontend)**
    - Flutter mengirim **request** ke backend Django melalui endpoint API.
-   - Data yang diterima dari Django (dalam format JSON/XML) akan diolah dan ditampilkan di aplikasi mobile.
+   - Data yang diterima dari Django dalam format JSON akan diolah dan ditampilkan di aplikasi mobile.
 
-2. **Django (Backend)**
-   - Django menerima request dari Flutter.
-   - Django menggunakan **Model** untuk mengambil data dari database.
-   - Data diubah ke format JSON/XML menggunakan **Serializers**.
-   - Django mengembalikan **response** ke Flutter.
+2. **Internet sebagai Perantara**
+   - Semua komunikasi antara Flutter dan Django dilakukan melalui protokol HTTP/HTTPS. Internet berfungsi sebagai penghubung antara frontend di aplikasi Flutter dan backend di Django.
 
-3. **Internet sebagai Perantara**
-   - Semua komunikasi antara Flutter dan Django dilakukan melalui protokol HTTP/HTTPS.
+3. **Django (Backend)**
+   - Django menerima request dari Flutter melalui endpoint yang sudah didefinisikan di `urls.py`.
+   - Django memproses request di `views.py`
+   - Setelah request valid, Django menggunakan **Model** untuk mengambil data dari database.
+   - Data diubah ke format JSON menggunakan **Serializers**.
+   - Django mengembalikan **response** ke Flutter dengan mengirimkan data JSON sebagai **HTTP Response**.
+
+![image](image/baganIntegrasi.png)
 
 ## Alur Kerja Sederhana
 1. Pengguna melakukan aksi di aplikasi Flutter, seperti mencari restoran.
