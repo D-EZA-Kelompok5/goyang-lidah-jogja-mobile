@@ -6,7 +6,7 @@
 - **Vissuta Gunawan Lim** - 2306214656
 - **Rakabima Ghaniendra Rusdianto** - 2306228472 
 
-**Tautan Deployment Aplikasi :**  http://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id
+**Tautan Deployment Aplikasi (Django) :**  http://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id
 
 # Integrasi Django dan Flutter
 
