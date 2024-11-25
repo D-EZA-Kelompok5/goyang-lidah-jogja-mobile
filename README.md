@@ -34,11 +34,6 @@ Aplikasi **GoyangLidahJogja** mengintegrasikan **Django** sebagai backend dan **
 4. Django mengirim data restoran ke Flutter dalam format JSON.
 5. Flutter menampilkan data tersebut di aplikasi.
 
-## Contoh API Request dan Response
-
-- **Request** dari Flutter (GET):
-
-
 # GoyangLidahJogja
 
 GoyangLidahJogja adalah platform online yang dirancang untuk memudahkan Anda dalam menjelajahi, menemukan, dan menikmati ragam kuliner terbaik yang ada di Yogyakarta. Kami menyediakan informasi lengkap, rekomendasi akurat, dan ulasan jujur dari para pecinta kuliner dan komunitas lokal. Baik Anda seorang wisatawan yang ingin menikmati cita rasa khas Jogja atau penduduk lokal yang mencari referensi tempat makan baru, GoyangLidahJogja siap membantu Anda menemukan sajian kuliner yang memanjakan lidah.
