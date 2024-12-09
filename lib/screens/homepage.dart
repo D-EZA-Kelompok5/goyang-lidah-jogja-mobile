@@ -37,8 +37,10 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: EdgeInsets.zero,
           children: <Widget>[
             UserAccountsDrawerHeader(
-              accountName: Text('Nama Pengguna', style: TextStyle(fontSize: 18)),
-              accountEmail: Text('email@domain.com', style: TextStyle(fontSize: 14)),
+              accountName:
+                  Text('Nama Pengguna', style: TextStyle(fontSize: 18)),
+              accountEmail:
+                  Text('email@domain.com', style: TextStyle(fontSize: 14)),
               currentAccountPicture: CircleAvatar(
                 backgroundColor: Colors.white,
                 child: Icon(Icons.person, size: 50, color: Colors.green[700]),
@@ -51,7 +53,8 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             ListTile(
               leading: Icon(Icons.settings, color: Colors.green[700]),
-              title: Text('Settings', style: TextStyle(color: Colors.green[700])),
+              title:
+                  Text('Settings', style: TextStyle(color: Colors.green[700])),
               onTap: () {},
             ),
             ListTile(
@@ -71,16 +74,16 @@ class _MyHomePageState extends State<MyHomePage> {
               // Header Section: "Mau makan apa?"
               Center(
                 child: Text(
-                  'Mau makan apa?', 
+                  'Mau makan apa?',
                   style: TextStyle(
-                    fontSize: 24,  // Slightly smaller for mobile
+                    fontSize: 24, // Slightly smaller for mobile
                     fontWeight: FontWeight.bold,
                     color: Colors.green[700],
                   ),
                 ),
               ),
               SizedBox(height: 20),
-              
+
               // Search Bar
               Container(
                 margin: EdgeInsets.symmetric(vertical: 20),
@@ -96,17 +99,20 @@ class _MyHomePageState extends State<MyHomePage> {
                       borderRadius: BorderRadius.circular(20),
                       borderSide: BorderSide(color: Colors.grey),
                     ),
-                    contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                   ),
                 ),
               ),
-              
+
               // Main Section: Grid of Menu (Menu Grid)
               Container(
-                height: MediaQuery.of(context).size.height * 0.6, // Limit the height
+                height: MediaQuery.of(context).size.height *
+                    0.6, // Limit the height
                 child: GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,  // Adjust the number of columns for mobile view
+                    crossAxisCount:
+                        2, // Adjust the number of columns for mobile view
                     crossAxisSpacing: 15,
                     mainAxisSpacing: 15,
                   ),
@@ -125,7 +131,8 @@ class _MyHomePageState extends State<MyHomePage> {
                               borderRadius: BorderRadius.circular(10),
                               color: Colors.grey[200],
                               image: DecorationImage(
-                                image: AssetImage('assets/images/menu_placeholder.png'), // Placeholder image
+                                image: AssetImage(
+                                    'assets/images/menu_placeholder.png'), // Placeholder image
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -134,7 +141,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               'Menu ${index + 1}',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                           ),
                           Text(

@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:goyang_lidah_jogja/screens/homepage.dart';
+import 'package:goyang_lidah_jogja/screens/restaurant_page.dart';
+import '../screens/restaurant_page.dart'; // Adjust the import path based on your project structure
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -39,17 +42,26 @@ class LeftDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.home_outlined),
             title: const Text('Main Page'),
-            // Placeholder action
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Main Page button pressed")),
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => MyHomePage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.restaurant_menu),
+            title: const Text('Restaurants'),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RestaurantPage()),
               );
             },
           ),
           ListTile(
             leading: const Icon(Icons.mood),
             title: const Text('Add Product'),
-            // Placeholder action
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Add Product button pressed")),
@@ -59,7 +71,6 @@ class LeftDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.add_reaction_rounded),
             title: const Text('Product List'),
-            // Placeholder action
             onTap: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text("Product List button pressed")),

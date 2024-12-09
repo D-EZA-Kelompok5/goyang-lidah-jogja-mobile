@@ -15,7 +15,8 @@ class MyApp extends StatelessWidget {
     return Provider(
       create: (_) {
         // Contoh: Anda bisa mengganti CookieRequest dengan class yang Anda butuhkan
-        CookieRequest request = CookieRequest();// Asumsi anda memiliki class CookieRequest
+        CookieRequest request =
+            CookieRequest(); // Asumsi anda memiliki class CookieRequest
         return request;
       },
       child: MaterialApp(
@@ -23,7 +24,8 @@ class MyApp extends StatelessWidget {
         theme: ThemeData(
           colorScheme: ColorScheme.fromSwatch(
             primarySwatch: Colors.green,
-          ).copyWith(secondary: const Color(0xFF76C7C0)), // Adjusted secondary color
+          ).copyWith(
+              secondary: const Color(0xFF76C7C0)), // Adjusted secondary color
           useMaterial3: true,
         ),
         home: MyHomePage(),
