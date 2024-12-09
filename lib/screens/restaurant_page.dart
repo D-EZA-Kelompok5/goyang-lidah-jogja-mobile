@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/restaurant.dart';
 import 'package:goyang_lidah_jogja/models/user_profile.dart';
+import 'package:goyang_lidah_jogja/widgets/left_drawer.dart';
 import '../models/restaurant.dart';
 import '../models/user_profile.dart';
 
@@ -11,7 +12,7 @@ class RestaurantPage extends StatelessWidget {
   final List<Restaurant> restaurants = [
     Restaurant(
       id: 1,
-      name: "Jogja Special Restaurant",
+      name: "Gudeg Mak Djum",
       description:
           "Experience the authentic taste of Yogyakarta with our traditional dishes and modern fusion cuisine.",
       address: "Jl. Malioboro No. 123, Yogyakarta",
@@ -44,6 +45,8 @@ class RestaurantPage extends StatelessWidget {
         ),
         centerTitle: true,
       ),
+      // Add the drawer here
+      drawer: const LeftDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: restaurants.isEmpty

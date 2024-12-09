@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:goyang_lidah_jogja/screens/restaurant_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/register.dart';
@@ -61,6 +62,22 @@ class _MyHomePageState extends State<MyHomePage> {
               leading: Icon(Icons.help, color: Colors.green[700]),
               title: Text('Help', style: TextStyle(color: Colors.green[700])),
               onTap: () {},
+            ),
+            ListTile(
+              leading:
+                  const Icon(Icons.restaurant_menu, color: Color(0xFF76B947)),
+              title: const Text(
+                'Restaurant',
+                style: TextStyle(color: Color(0xFF76B947)),
+              ),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => RestaurantPage(),
+                  ),
+                );
+              },
             ),
           ],
         ),
