@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:goyang_lidah_jogja/screens/AnnouncementEntry_form.dart';
 
 class LeftDrawer extends StatelessWidget {
   const LeftDrawer({super.key});
@@ -66,6 +67,23 @@ class LeftDrawer extends StatelessWidget {
               );
             },
           ),
+            ListTile(
+    leading: const Icon(Icons.mood),
+    title: const Text('Add Announcement'),
+    // Bagian redirection ke MoodEntryFormPage
+    onTap: () {
+      /*
+      TODO: Buatlah routing ke MoodEntryFormPage di sini,
+      setelah halaman MoodEntryFormPage sudah dibuat.
+      */
+       Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AnnouncementEntryFormPage(),
+              ),
+            );
+    },
+  ),
         ],
       ),
     );

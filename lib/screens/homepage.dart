@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:goyang_lidah_jogja/widgets/left_drawer.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/register.dart';
@@ -32,36 +33,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.white,
         elevation: 2.0, // Light shadow for mobile look
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            UserAccountsDrawerHeader(
-              accountName: Text('Nama Pengguna', style: TextStyle(fontSize: 18)),
-              accountEmail: Text('email@domain.com', style: TextStyle(fontSize: 14)),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 50, color: Colors.green[700]),
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.login, color: Colors.green[700]),
-              title: Text('Login', style: TextStyle(color: Colors.green[700])),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: Icon(Icons.settings, color: Colors.green[700]),
-              title: Text('Settings', style: TextStyle(color: Colors.green[700])),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: Icon(Icons.help, color: Colors.green[700]),
-              title: Text('Help', style: TextStyle(color: Colors.green[700])),
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
+      drawer: const LeftDrawer(),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
