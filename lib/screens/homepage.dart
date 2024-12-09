@@ -1,9 +1,12 @@
+
+
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/screens/restaurant_page.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/register.dart';
 import 'package:goyang_lidah_jogja/screens/menu.dart';
+import 'package:goyang_lidah_jogja/screens/menu_detail.dart'; // Import MenuDetailPage
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -22,12 +25,12 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Row(
               children: [
-                Icon(Icons.fastfood, size: 30), // Logo size adjusted for mobile
+                Icon(Icons.fastfood, size: 30, color: Colors.green[700]), // Tambahkan warna untuk konsistensi
                 SizedBox(width: 10),
-                Text('GoyangLidahJogja', style: TextStyle(fontSize: 20)),
+                Text('GoyangLidahJogja', style: TextStyle(fontSize: 20, color: Colors.green[700])), // Tambahkan warna
               ],
             ),
-            Icon(Icons.search), // Search icon
+            Icon(Icons.search, color: Colors.green[700]), // Tambahkan warna
           ],
         ),
         backgroundColor: Colors.white,
@@ -46,11 +49,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 backgroundColor: Colors.white,
                 child: Icon(Icons.person, size: 50, color: Colors.green[700]),
               ),
+              decoration: BoxDecoration(
+                color: Colors.green[700],
+              ),
             ),
             ListTile(
               leading: Icon(Icons.login, color: Colors.green[700]),
               title: Text('Login', style: TextStyle(color: Colors.green[700])),
-              onTap: () {},
+              onTap: () {
+                // Implementasikan navigasi ke halaman login
+              },
             ),
             ListTile(
               leading: Icon(Icons.settings, color: Colors.green[700]),
@@ -170,6 +178,28 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     );
                   },
+                ),
+              ),
+
+              SizedBox(height: 20),
+
+              // **Teks Kecil sebagai Link ke MenuDetailPage**
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => MenuDetailPage()),
+                    );
+                  },
+                  child: Text(
+                    'Contoh menu_detail.dart', // Teks yang ditampilkan
+                    style: TextStyle(
+                      color: Colors.blue,
+                      decoration: TextDecoration.underline,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
               ),
             ],
