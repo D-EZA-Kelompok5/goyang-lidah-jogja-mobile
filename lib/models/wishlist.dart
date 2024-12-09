@@ -3,6 +3,8 @@
 //     final wishlist = wishlistFromJson(jsonString);
 
 import 'dart:convert';
+import 'user_profile.dart';
+import 'Menu.dart';
 
 Wishlist wishlistFromJson(String str) => Wishlist.fromJson(json.decode(str));
 
@@ -49,8 +51,8 @@ class WishlistElement {
 }
 
 class Fields {
-    int user;
-    int menu;
+    UserProfile user;
+    MenuElement menu;
     String catatan;
     String status;
 
@@ -62,15 +64,15 @@ class Fields {
     });
 
     factory Fields.fromJson(Map<String, dynamic> json) => Fields(
-        user: json["user"],
-        menu: json["menu"],
+        user: UserProfile.fromJson(json["user"]),
+        menu: MenuElement.fromJson(json["menu"]),
         catatan: json["catatan"],
         status: json["status"],
     );
 
     Map<String, dynamic> toJson() => {
-        "user": user,
-        "menu": menu,
+        "user": user.toJson(),
+        "menu": menu.toJson(),
         "catatan": catatan,
         "status": status,
     };

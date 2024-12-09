@@ -3,6 +3,7 @@
 //     final event = eventFromJson(jsonString);
 
 import 'dart:convert';
+import 'user_profile.dart';
 
 Event eventFromJson(String str) => Event.fromJson(json.decode(str));
 
@@ -31,9 +32,9 @@ class EventElement {
     DateTime date;
     String time;
     String location;
-    String entranceFee;
-    String image;
-    CreatedBy createdBy;
+    double? entranceFee;
+    String? image;
+    UserProfile createdBy;
 
     EventElement({
         required this.id,
@@ -42,8 +43,8 @@ class EventElement {
         required this.date,
         required this.time,
         required this.location,
-        required this.entranceFee,
-        required this.image,
+        this.entranceFee,
+        this.image,
         required this.createdBy,
     });
 
@@ -54,9 +55,9 @@ class EventElement {
         date: DateTime.parse(json["date"]),
         time: json["time"],
         location: json["location"],
-        entranceFee: json["entrance_fee"],
+        entranceFee: json["entrance_fee"] != null ? double.parse(json["entrance_fee"]) : null,
         image: json["image"],
-        createdBy: CreatedBy.fromJson(json["created_by"]),
+        createdBy: UserProfile.fromJson(json["created_by"]),
     );
 
     Map<String, dynamic> toJson() => {
@@ -66,48 +67,8 @@ class EventElement {
         "date": "${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
         "time": time,
         "location": location,
-        "entrance_fee": entranceFee,
+        "entrance_fee": entranceFee?.toString(),
         "image": image,
         "created_by": createdBy.toJson(),
-    };
-}
-
-class CreatedBy {
-    int userId;
-    String username;
-    String email;
-    String role;
-    String bio;
-    dynamic profilePicture;
-    String level;
-
-    CreatedBy({
-        required this.userId,
-        required this.username,
-        required this.email,
-        required this.role,
-        required this.bio,
-        required this.profilePicture,
-        required this.level,
-    });
-
-    factory CreatedBy.fromJson(Map<String, dynamic> json) => CreatedBy(
-        userId: json["user_id"],
-        username: json["username"],
-        email: json["email"],
-        role: json["role"],
-        bio: json["bio"],
-        profilePicture: json["profile_picture"],
-        level: json["level"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "user_id": userId,
-        "username": username,
-        "email": email,
-        "role": role,
-        "bio": bio,
-        "profile_picture": profilePicture,
-        "level": level,
     };
 }

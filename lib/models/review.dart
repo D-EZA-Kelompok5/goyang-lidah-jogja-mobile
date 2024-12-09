@@ -3,6 +3,8 @@
 //     final review = reviewFromJson(jsonString);
 
 import 'dart:convert';
+import 'user_profile.dart';
+import 'Menu.dart';
 
 Review reviewFromJson(String str) => Review.fromJson(json.decode(str));
 
@@ -26,11 +28,11 @@ class Review {
 
 class ReviewElement {
     int id;
-    String user;
+    UserProfile user;
     int rating;
     String comment;
     DateTime createdAt;
-    dynamic lastEdited;
+    DateTime? lastEdited;
 
     ReviewElement({
         required this.id,
@@ -38,24 +40,24 @@ class ReviewElement {
         required this.rating,
         required this.comment,
         required this.createdAt,
-        required this.lastEdited,
+        this.lastEdited,
     });
 
     factory ReviewElement.fromJson(Map<String, dynamic> json) => ReviewElement(
         id: json["id"],
-        user: json["user"],
+        user: UserProfile.fromJson(json["user"]),
         rating: json["rating"],
         comment: json["comment"],
         createdAt: DateTime.parse(json["created_at"]),
-        lastEdited: json["last_edited"],
+        lastEdited: json["last_edited"] != null ? DateTime.parse(json["last_edited"]) : null,
     );
 
     Map<String, dynamic> toJson() => {
         "id": id,
-        "user": user,
+        "user": user.toJson(),
         "rating": rating,
         "comment": comment,
         "created_at": createdAt.toIso8601String(),
-        "last_edited": lastEdited,
+        "last_edited": lastEdited?.toIso8601String(),
     };
 }

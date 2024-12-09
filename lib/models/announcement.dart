@@ -3,6 +3,7 @@
 //     final announcement = announcementFromJson(jsonString);
 
 import 'dart:convert';
+import 'restaurant.dart';
 
 Announcement announcementFromJson(String str) => Announcement.fromJson(json.decode(str));
 
@@ -49,25 +50,5 @@ class AnnouncementElement {
         "title": title,
         "message": message,
         "restaurant": restaurant.toJson(),
-    };
-}
-
-class Restaurant {
-    int id;
-    String name;
-
-    Restaurant({
-        required this.id,
-        required this.name,
-    });
-
-    factory Restaurant.fromJson(Map<String, dynamic> json) => Restaurant(
-        id: json["id"],
-        name: json["name"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "id": id,
-        "name": name,
     };
 }
