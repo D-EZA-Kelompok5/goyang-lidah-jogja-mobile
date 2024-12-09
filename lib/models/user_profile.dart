@@ -1,9 +1,6 @@
-// user_profile.dart
-// To parse this JSON data, do
-//
-//     final userProfile = userProfileFromJson(jsonString);
+// lib/models/user_profile.dart
 
-// import 'dart:convert';
+// Import yang diperlukan
 import 'tag.dart';
 
 enum Level { BEGINNER, BRONZE, SILVER, GOLD }
@@ -74,6 +71,12 @@ class UserProfile {
             ? List<dynamic>.from(preferences!.map((x) => x.toJson()))
             : null,
       };
+
+  // Getter untuk mendapatkan representasi string dari Role
+  String get roleDisplay => roleValues.reverse[role]!.replaceAll('_', ' ').toUpperCase();
+
+  // Getter untuk mendapatkan representasi string dari Level
+  String get levelDisplay => levelValues.reverse[level]!;
 }
 
 class EnumValues<T> {
