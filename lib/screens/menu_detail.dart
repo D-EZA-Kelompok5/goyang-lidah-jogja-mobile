@@ -1,4 +1,7 @@
+// lib/screens/menu_detail.dart 
+
 import 'package:flutter/material.dart';
+import 'package:goyang_lidah_jogja/screens/ulasGoyangan.dart'; // Import UlasGoyanganPage
 
 class MenuDetailPage extends StatefulWidget {
   @override
@@ -14,7 +17,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
     final Map<String, dynamic> menu = {
       'id': 1,
       'name': 'Nasi Goreng Spesial',
-      'image': 'https://via.placeholder.com/400', 
+      'image': 'assets/images/nasigorengspecial.jpeg', // Path aset yang benar
       'price': 25000.00,
       'description':
           'Nasi goreng spesial dengan campuran ayam, telur, dan sayuran segar.',
@@ -82,13 +85,15 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Gambar Menu
-            if (menu['image'] != null && (menu['image'] as String).isNotEmpty)
-              Image.network(
-                menu['image'],
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                menu['image'], // Menggunakan Image.asset dengan path yang benar
                 width: double.infinity,
                 height: 200,
                 fit: BoxFit.cover,
               ),
+            ),
             SizedBox(height: 16.0),
 
             // Nama Menu
@@ -155,35 +160,48 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
               children: (menu['tags'] as List<dynamic>)
                   .map((tag) => Chip(
                         label: Text(tag),
+                        backgroundColor: Colors.green[100],
                       ))
                   .toList(),
             ),
             SizedBox(height: 16.0),
 
             // Lokasi
-            Text(
-              'Lokasi: ${menu['restaurant']['address']}',
-              style: TextStyle(fontSize: 16),
+            Row(
+              children: [
+                Icon(Icons.location_on, color: Colors.green),
+                SizedBox(width: 8.0),
+                Expanded(
+                  child: Text(
+                    menu['restaurant']['address'],
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
             ),
             SizedBox(height: 24.0),
 
             // Tombol Ulas Goyangan
-            ElevatedButton(
-              onPressed: () {
-                // Implementasikan navigasi ke halaman ulasan atau tampilkan modal login
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Tombol Ulas Goyangan ditekan'),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => UlasGoyanganPage()),
+                  );
+                },
+                child: Text('Ulas Goyangan'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  padding:
+                      EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  textStyle:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
                   ),
-                );
-              },
-              child: Text('Ulas Goyangan'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue, // Ganti 'primary' dengan 'backgroundColor'
-                padding:
-                    EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                textStyle:
-                    TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             SizedBox(height: 24.0),
@@ -280,19 +298,40 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                 final review = reviews[index];
                 return Card(
                   margin: EdgeInsets.symmetric(vertical: 8.0),
-                  child: ListTile(
-                    title: Text(review['user']),
-                    subtitle: Column(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildStarRating(review['rating']),
-                        SizedBox(height: 4.0),
-                        Text(review['comment']),
-                        SizedBox(height: 4.0),
+                        // Header Ulasan: Nama dan Rating
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              review['user'],
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            _buildStarRating(review['rating']),
+                          ],
+                        ),
+                        SizedBox(height: 8.0),
+                        // Komentar Ulasan
+                        Text(
+                          review['comment'],
+                          style: TextStyle(fontSize: 14),
+                        ),
+                        SizedBox(height: 8.0),
+                        // Tanggal Ulasan
                         Text(
                           review['date'],
-                          style:
-                              TextStyle(fontSize: 12, color: Colors.grey[600]),
+                          style: TextStyle(fontSize: 12, color: Colors.grey[600]),
                         ),
                       ],
                     ),
