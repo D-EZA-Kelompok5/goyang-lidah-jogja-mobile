@@ -1,37 +1,13 @@
-// user_profile.dart
-// To parse this JSON data, do
-//
-//     final userProfile = userProfileFromJson(jsonString);
-
-// import 'dart:convert';
-import 'tag.dart';
-
-enum Level { BEGINNER, BRONZE, SILVER, GOLD }
-
-final levelValues = EnumValues({
-  "BEGINNER": Level.BEGINNER,
-  "BRONZE": Level.BRONZE,
-  "SILVER": Level.SILVER,
-  "GOLD": Level.GOLD,
-});
-
-enum Role { EVENT_MANAGER, RESTAURANT_OWNER, CUSTOMER }
-
-final roleValues = EnumValues({
-  "EVENT_MANAGER": Role.EVENT_MANAGER,
-  "RESTAURANT_OWNER": Role.RESTAURANT_OWNER,
-  "CUSTOMER": Role.CUSTOMER,
-});
-
+// models/user_profile.dart
 class UserProfile {
   int userId;
   String username;
   String email;
-  Role role;
+  String role;
   String bio;
   String? profilePicture;
   int reviewCount;
-  Level level;
+  String level;
   List<TagElement>? preferences;
 
   UserProfile({
@@ -50,11 +26,11 @@ class UserProfile {
         userId: json["user_id"],
         username: json["username"],
         email: json["email"],
-        role: roleValues.map[json["role"]]!,
+        role: json["role"],
         bio: json["bio"],
         profilePicture: json["profile_picture"],
         reviewCount: json["review_count"],
-        level: levelValues.map[json["level"]]!,
+        level: json["level"],
         preferences: json["preferences"] != null
             ? List<TagElement>.from(
                 json["preferences"].map((x) => TagElement.fromJson(x)))
@@ -65,25 +41,30 @@ class UserProfile {
         "user_id": userId,
         "username": username,
         "email": email,
-        "role": roleValues.reverse[role],
+        "role": role,
         "bio": bio,
         "profile_picture": profilePicture,
         "review_count": reviewCount,
-        "level": levelValues.reverse[level],
+        "level": level,
         "preferences": preferences != null
             ? List<dynamic>.from(preferences!.map((x) => x.toJson()))
             : null,
       };
 }
 
-class EnumValues<T> {
-  Map<String, T> map;
-  late Map<T, String> reverseMap;
+class TagElement {
+  // Define the TagElement properties based on your requirements
+  String tagName;
 
-  EnumValues(this.map);
+  TagElement({
+    required this.tagName,
+  });
 
-  Map<T, String> get reverse {
-    reverseMap = map.map((k, v) => MapEntry(v, k));
-    return reverseMap;
-  }
+  factory TagElement.fromJson(Map<String, dynamic> json) => TagElement(
+        tagName: json["tag_name"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "tag_name": tagName,
+      };
 }
