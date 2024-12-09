@@ -1,30 +1,12 @@
+// lib/screens/login.dart
+
 import 'package:flutter/material.dart';
-import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/register.dart';
-import 'package:goyang_lidah_jogja/screens/menu.dart';
-
-void main() {
-  runApp(const LoginApp());
-}
-
-class LoginApp extends StatelessWidget {
-  const LoginApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Login',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSwatch(
-          primarySwatch: Colors.deepPurple,
-        ).copyWith(secondary: Colors.deepPurple[400]),
-      ),
-      home: const LoginPage(),
-    );
-  }
-}
+import 'package:goyang_lidah_jogja/screens/homepage.dart';
+import '../models/user_profile.dart';
+import '../services/auth_service.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -36,6 +18,9 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+
+  // Variabel untuk menyimpan UserProfile
+  UserProfile? userProfile;
 
   @override
   Widget build(BuildContext context) {
@@ -98,11 +83,9 @@ class _LoginPageState extends State<LoginPage> {
                       String username = _usernameController.text;
                       String password = _passwordController.text;
 
-                      // Cek kredensial
-                      // Untuk menyambungkan Android emulator dengan Django pada localhost,
-                      // gunakan URL http://127.0.0.1/
-                      final response = await request
-                          .login("http://127.0.0.1:8000/auth/login/", {
+                      // Autentikasi menggunakan pbp_django_auth
+                      final response = await request.login(
+                          "http://127.0.0.1:8000/auth/login/", {
                         'username': username,
                         'password': password,
                       });
@@ -110,19 +93,36 @@ class _LoginPageState extends State<LoginPage> {
                       if (request.loggedIn) {
                         String message = response['message'];
                         String uname = response['username'];
-                        if (context.mounted) {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => MyHomePage()),
-                          );
-                          ScaffoldMessenger.of(context)
-                            ..hideCurrentSnackBar()
-                            ..showSnackBar(
-                              SnackBar(
-                                  content:
-                                      Text("$message Selamat datang, $uname.")),
+
+                        // Ambil UserProfile setelah login berhasil
+                        AuthService authService = AuthService(request);
+                        UserProfile? profile = await authService.getUserProfile();
+
+                        if (profile != null) {
+                          setState(() {
+                            userProfile = profile;
+                          });
+
+                          if (context.mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      MyHomePage(userProfile: userProfile!)),
                             );
+                            ScaffoldMessenger.of(context)
+                              ..hideCurrentSnackBar()
+                              ..showSnackBar(
+                                SnackBar(
+                                    content:
+                                        Text("$message Selamat datang, $uname.")),
+                              );
+                          }
+                        } else {
+                          // Handle gagal mengambil profil
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text("Gagal mengambil profil.")));
                         }
                       } else {
                         if (context.mounted) {

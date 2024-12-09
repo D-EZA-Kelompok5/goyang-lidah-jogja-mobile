@@ -1,13 +1,34 @@
-// models/user_profile.dart
+// lib/models/user_profile.dart
+
+// Import yang diperlukan
+import 'tag.dart';
+
+enum Level { BEGINNER, BRONZE, SILVER, GOLD }
+
+final levelValues = EnumValues({
+  "BEGINNER": Level.BEGINNER,
+  "BRONZE": Level.BRONZE,
+  "SILVER": Level.SILVER,
+  "GOLD": Level.GOLD,
+});
+
+enum Role { EVENT_MANAGER, RESTAURANT_OWNER, CUSTOMER }
+
+final roleValues = EnumValues({
+  "EVENT_MANAGER": Role.EVENT_MANAGER,
+  "RESTAURANT_OWNER": Role.RESTAURANT_OWNER,
+  "CUSTOMER": Role.CUSTOMER,
+});
+
 class UserProfile {
   int userId;
   String username;
   String email;
-  String role;
+  Role role;
   String bio;
   String? profilePicture;
   int reviewCount;
-  String level;
+  Level level;
   List<TagElement>? preferences;
 
   UserProfile({
@@ -26,11 +47,11 @@ class UserProfile {
         userId: json["user_id"],
         username: json["username"],
         email: json["email"],
-        role: json["role"],
+        role: roleValues.map[json["role"]]!,
         bio: json["bio"],
         profilePicture: json["profile_picture"],
         reviewCount: json["review_count"],
-        level: json["level"],
+        level: levelValues.map[json["level"]]!,
         preferences: json["preferences"] != null
             ? List<TagElement>.from(
                 json["preferences"].map((x) => TagElement.fromJson(x)))
@@ -41,30 +62,31 @@ class UserProfile {
         "user_id": userId,
         "username": username,
         "email": email,
-        "role": role,
+        "role": roleValues.reverse[role],
         "bio": bio,
         "profile_picture": profilePicture,
         "review_count": reviewCount,
-        "level": level,
+        "level": levelValues.reverse[level],
         "preferences": preferences != null
             ? List<dynamic>.from(preferences!.map((x) => x.toJson()))
             : null,
       };
+
+  // Getter untuk mendapatkan representasi string dari Role
+  String get roleDisplay => roleValues.reverse[role]!.replaceAll('_', ' ').toUpperCase();
+
+  // Getter untuk mendapatkan representasi string dari Level
+  String get levelDisplay => levelValues.reverse[level]!;
 }
 
-class TagElement {
-  // Define the TagElement properties based on your requirements
-  String tagName;
+class EnumValues<T> {
+  Map<String, T> map;
+  late Map<T, String> reverseMap;
 
-  TagElement({
-    required this.tagName,
-  });
+  EnumValues(this.map);
 
-  factory TagElement.fromJson(Map<String, dynamic> json) => TagElement(
-        tagName: json["tag_name"],
-      );
-
-  Map<String, dynamic> toJson() => {
-        "tag_name": tagName,
-      };
+  Map<T, String> get reverse {
+    reverseMap = map.map((k, v) => MapEntry(v, k));
+    return reverseMap;
+  }
 }

@@ -1,10 +1,18 @@
+// lib/screens/homepage.dart
+
 import 'package:flutter/material.dart';
-import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:goyang_lidah_jogja/screens/register.dart';
 import 'package:goyang_lidah_jogja/screens/menu.dart';
+import 'package:goyang_lidah_jogja/widgets/left_drawer.dart'; // Import LeftDrawer
+import '../models/user_profile.dart';
+import '../services/auth_service.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
 
 class MyHomePage extends StatefulWidget {
+  final UserProfile? userProfile;
+
+  const MyHomePage({super.key, this.userProfile});
+
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
@@ -12,8 +20,41 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   TextEditingController _searchController = TextEditingController();
 
+  UserProfile? userProfile;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeUserProfile();
+  }
+
+  Future<void> _initializeUserProfile() async {
+    final request = Provider.of<CookieRequest>(context, listen: false);
+    if (request.loggedIn) {
+      AuthService authService = AuthService(request);
+      UserProfile? profile = await authService.getUserProfile();
+      setState(() {
+        userProfile = profile;
+        isLoading = false;
+      });
+    } else {
+      setState(() {
+        userProfile = null;
+        isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      // Tampilkan indikator loading saat mengambil profil
+      return Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -21,59 +62,62 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Row(
               children: [
-                Icon(Icons.fastfood, size: 30), // Logo size adjusted for mobile
+                Icon(Icons.fastfood, size: 30, color: Colors.deepPurple), // Warna ditambahkan
                 SizedBox(width: 10),
-                Text('GoyangLidahJogja', style: TextStyle(fontSize: 20)),
+                Text('GoyangLidahJogja', style: TextStyle(fontSize: 20, color: Colors.deepPurple)),
               ],
             ),
-            Icon(Icons.search), // Search icon
+            Icon(Icons.search, color: Colors.deepPurple), // Ikon search dengan warna
           ],
         ),
         backgroundColor: Colors.white,
-        elevation: 2.0, // Light shadow for mobile look
+        elevation: 2.0, // Bayangan ringan untuk tampilan mobile
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            UserAccountsDrawerHeader(
-              accountName: Text('Nama Pengguna', style: TextStyle(fontSize: 18)),
-              accountEmail: Text('email@domain.com', style: TextStyle(fontSize: 14)),
-              currentAccountPicture: CircleAvatar(
-                backgroundColor: Colors.white,
-                child: Icon(Icons.person, size: 50, color: Colors.green[700]),
-              ),
-            ),
-            ListTile(
-              leading: Icon(Icons.login, color: Colors.green[700]),
-              title: Text('Login', style: TextStyle(color: Colors.green[700])),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: Icon(Icons.settings, color: Colors.green[700]),
-              title: Text('Settings', style: TextStyle(color: Colors.green[700])),
-              onTap: () {},
-            ),
-            ListTile(
-              leading: Icon(Icons.help, color: Colors.green[700]),
-              title: Text('Help', style: TextStyle(color: Colors.green[700])),
-              onTap: () {},
-            ),
-          ],
-        ),
-      ),
+      drawer: LeftDrawer(userProfile: userProfile), // Pass UserProfile ke LeftDrawer
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // User Info Section (Hanya tampilkan jika userProfile tidak null)
+              if (userProfile != null)
+                Row(
+                  children: [
+                    userProfile!.profilePicture != null
+                        ? CircleAvatar(
+                            radius: 30,
+                            backgroundImage: NetworkImage(userProfile!.profilePicture!),
+                          )
+                        : const CircleAvatar(
+                            radius: 30,
+                            child: Icon(Icons.person, size: 30),
+                          ),
+                    SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          userProfile!.username,
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          userProfile!.roleDisplay, // Menggunakan getter
+                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              if (userProfile != null)
+                SizedBox(height: 20),
+              
               // Header Section: "Mau makan apa?"
               Center(
                 child: Text(
                   'Mau makan apa?', 
                   style: TextStyle(
-                    fontSize: 24,  // Slightly smaller for mobile
+                    fontSize: 24,  // Sedikit lebih kecil untuk tampilan mobile
                     fontWeight: FontWeight.bold,
                     color: Colors.green[700],
                   ),
@@ -103,10 +147,12 @@ class _MyHomePageState extends State<MyHomePage> {
               
               // Main Section: Grid of Menu (Menu Grid)
               Container(
-                height: MediaQuery.of(context).size.height * 0.6, // Limit the height
+                height: MediaQuery.of(context).size.height * 0.6, // Batasi tinggi
                 child: GridView.builder(
+                  physics: NeverScrollableScrollPhysics(), // Nonaktifkan scroll pada GridView
+                  shrinkWrap: true, // Membatasi ukuran GridView
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,  // Adjust the number of columns for mobile view
+                    crossAxisCount: 2,  // Sesuaikan jumlah kolom untuk tampilan mobile
                     crossAxisSpacing: 15,
                     mainAxisSpacing: 15,
                   ),
@@ -124,10 +170,10 @@ class _MyHomePageState extends State<MyHomePage> {
                             decoration: BoxDecoration(
                               borderRadius: BorderRadius.circular(10),
                               color: Colors.grey[200],
-                              image: DecorationImage(
-                                image: AssetImage('assets/images/menu_placeholder.png'), // Placeholder image
-                                fit: BoxFit.cover,
-                              ),
+                              // image: DecorationImage(
+                              //   image: AssetImage('assets/images/menu_placeholder.png'), // Placeholder image
+                              //   fit: BoxFit.cover,
+                              // ),
                             ),
                           ),
                           Padding(

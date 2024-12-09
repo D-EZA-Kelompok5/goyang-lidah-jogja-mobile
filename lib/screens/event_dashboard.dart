@@ -26,10 +26,10 @@ class _EventDashboardState extends State<EventDashboard> {
         userId: 1,
         username: 'event_manager',
         email: 'manager@example.com',
-        role: 'EVENT_MANAGER',
+        role: Role.EVENT_MANAGER, // Menggunakan enum Role
         bio: 'Managing awesome events!',
         reviewCount: 10,
-        level: 'GOLD',
+        level: Level.GOLD, // Menggunakan enum Level
         preferences: null,
       ),
     ),
@@ -46,14 +46,14 @@ class _EventDashboardState extends State<EventDashboard> {
         userId: 2,
         username: 'artist_owner',
         email: 'owner@example.com',
-        role: 'EVENT_MANAGER',
+        role: Role.EVENT_MANAGER, // Menggunakan enum Role
         bio: 'Passionate about art.',
         reviewCount: 5,
-        level: 'SILVER',
+        level: Level.SILVER, // Menggunakan enum Level
         preferences: null,
       ),
     ),
-    // Add more dummy events here
+    // Tambahkan lebih banyak data dummy sesuai kebutuhan
   ]);
 
   List<EventElement> get _filteredEvents {
