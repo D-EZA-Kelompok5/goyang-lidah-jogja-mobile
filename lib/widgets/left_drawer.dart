@@ -5,6 +5,7 @@ import 'package:goyang_lidah_jogja/models/user_profile.dart';
 import 'package:goyang_lidah_jogja/screens/event_dashboard.dart'; // Import the EventDashboard screen
 import 'package:goyang_lidah_jogja/screens/login.dart'; // Import Login Page
 import 'package:goyang_lidah_jogja/screens/register.dart';
+import 'package:goyang_lidah_jogja/screens/restaurant_dashboard.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/homepage.dart';
@@ -107,8 +108,11 @@ class LeftDrawer extends StatelessWidget {
                 title: const Text('Restaurant Dashboard'),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Restaurant Dashboard button pressed")),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RestaurantDashboardPage(),
+                    ),
                   );
                 },
               ),
@@ -145,9 +149,10 @@ class LeftDrawer extends StatelessWidget {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                final response = await request.logout(
-                    "http://10.0.2.2:8000/auth/logout/");
-                if (response['status'] == true || response['status'] == 'success') {
+                final response =
+                    await request.logout("http://10.0.2.2:8000/auth/logout/");
+                if (response['status'] == true ||
+                    response['status'] == 'success') {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const MyHomePage()),
@@ -199,11 +204,8 @@ class LeftDrawer extends StatelessWidget {
               },
             ),
           ],
-
-          
         ],
       ),
     );
   }
 }
-
