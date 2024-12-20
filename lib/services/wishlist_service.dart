@@ -27,7 +27,7 @@ class WishlistService {
   }
 
 
-  Future<void> createWishlist(WishlistElement wishlist) async {
+  Future<int> createWishlist(WishlistElement wishlist) async {
     final data = {
       "menu_id": wishlist.menu.id,
       "catatan": wishlist.catatan,
@@ -47,6 +47,7 @@ class WishlistService {
       throw Exception(
           'Failed to create wishlist: ${response['message'] ?? 'unknown error'}');
     }
+    return response['id'];
   }
 
   Future<void> updateWishlist(WishlistElement wishlist) async {
