@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/wishlist.dart';
 import '../services/wishlist_service.dart';
+import 'wishlist_edit.dart';
 
 class WishlistList extends StatefulWidget {
   const WishlistList({Key? key}) : super(key: key);
@@ -22,7 +23,7 @@ class _WishlistListState extends State<WishlistList> {
     super.initState();
     final request = Provider.of<CookieRequest>(context, listen: false);
     wishlistService = WishlistService(request);
-    futureWishlists = wishlistService.fetchWishlists();
+    futureWishlists = wishlistService.fetchWishlists(request);
   }
 
   @override
@@ -108,16 +109,25 @@ class _WishlistListState extends State<WishlistList> {
                           ),
                         ),
                         const SizedBox(height: 10),
-                        // Tombol Edit & Delete (opsional)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             ElevatedButton(
                               onPressed: () {
                                 // Aksi Edit
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Edit: ${item.menu.name}")),
-                                );
+                                final request = Provider.of<CookieRequest>(context, listen: false);
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WishlistEditPage(
+                                      wishlist: item,
+                                    ),
+                                  )
+                                ). then((value) {
+                                  setState((){
+                                    futureWishlists = wishlistService.fetchWishlists(request);
+                                  });
+                                });
                               },
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: Colors.black,
@@ -127,6 +137,7 @@ class _WishlistListState extends State<WishlistList> {
                             OutlinedButton(
                               onPressed: () async {
                                 try {
+                                  final request = Provider.of<CookieRequest>(context, listen: false);
                                   final confirm = await showDialog<bool>(
                                     context: context,
                                     builder: (context) {
@@ -151,7 +162,7 @@ class _WishlistListState extends State<WishlistList> {
                                   if (confirm != true) return;
 
                                   // Panggil service untuk menghapus wishlist
-                                  await wishlistService.deleteWishlist(item.id);
+                                  await wishlistService.deleteWishlist(item.id, request);
 
                                   // Tampilkan snackbar sukses
                                   ScaffoldMessenger.of(context).showSnackBar(
@@ -160,7 +171,7 @@ class _WishlistListState extends State<WishlistList> {
 
                                   // Perbarui daftar wishlist setelah penghapusan
                                   setState(() {
-                                    futureWishlists = wishlistService.fetchWishlists();
+                                    futureWishlists = wishlistService.fetchWishlists(request);
                                   });
                                 } catch (error) {
                                   // Tangani error dan tampilkan pesan
