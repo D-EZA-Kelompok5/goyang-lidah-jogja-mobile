@@ -8,6 +8,7 @@ import 'package:goyang_lidah_jogja/screens/register.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/homepage.dart';
+import 'package:goyang_lidah_jogja/screens/wishlist_list.dart';
 
 class LeftDrawer extends StatelessWidget {
   final UserProfile? userProfile;
@@ -94,8 +95,9 @@ class LeftDrawer extends StatelessWidget {
                 title: const Text('Wishlists'),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Wishlist button pressed")),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const WishlistList()),
                   );
                 },
               ),
