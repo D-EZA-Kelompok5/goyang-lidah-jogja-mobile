@@ -10,10 +10,12 @@ import '../services/restaurant_service.dart';
 
 class RestaurantDetailPage extends StatefulWidget {
   final int restaurantId;
+  final bool isOwner;
 
   const RestaurantDetailPage({
     Key? key,
     required this.restaurantId,
+    this.isOwner = false,
   }) : super(key: key);
 
   @override
@@ -160,11 +162,13 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
           },
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _navigateToMenuForm(),
-        child: const Icon(Icons.add),
-        backgroundColor: Theme.of(context).primaryColor,
-      ),
+      floatingActionButton: widget.isOwner
+          ? FloatingActionButton(
+              onPressed: () => _navigateToMenuForm(),
+              child: const Icon(Icons.add),
+              backgroundColor: Theme.of(context).primaryColor,
+            )
+          : null,
     );
   }
 
@@ -259,7 +263,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              _buildMenuFilterDropdown(),
+              if (widget.isOwner) _buildMenuFilterDropdown(),
             ],
           ),
           const SizedBox(height: 16),
@@ -304,78 +308,81 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     );
   }
 
+  // Modify _buildMenuItem to handle both owner and non-owner views
   Widget _buildMenuItem(MenuElement menu) {
+    Widget menuContent = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        AspectRatio(
+          aspectRatio: 1,
+          child: menu.image != null
+              ? Image.network(
+                  menu.image!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      color: Colors.grey[200],
+                      child: const Icon(
+                        Icons.restaurant,
+                        size: 40,
+                        color: Colors.grey,
+                      ),
+                    );
+                  },
+                )
+              : _buildPlaceholderImage(),
+        ),
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                menu.name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                menu.description,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Rp ${menu.price.toString()}',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Theme.of(context).primaryColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+
     return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
-      child: InkWell(
-        onTap: () => _showMenuOptions(menu),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Menu Image
-            AspectRatio(
-              aspectRatio: 1,
-              child: menu.image != null
-                  ? Image.network(
-                      menu.image!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          color: Colors.grey[200],
-                          child: const Icon(
-                            Icons.restaurant,
-                            size: 40,
-                            color: Colors.grey,
-                          ),
-                        );
-                      },
-                    )
-                  : _buildPlaceholderImage(),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    menu.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    menu.description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Rp ${menu.price.toString()}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+      child: widget.isOwner
+          ? InkWell(
+              onTap: () => _showMenuOptions(menu),
+              child: menuContent,
+            )
+          : menuContent, // No InkWell for non-owners
     );
   }
 
