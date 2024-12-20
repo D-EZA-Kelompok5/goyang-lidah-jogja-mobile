@@ -1,39 +1,71 @@
-// lib/widgets/left_drawer.dart
-
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/user_profile.dart';
-import 'package:goyang_lidah_jogja/screens/event_dashboard.dart'; // Import the EventDashboard screen
-import 'package:goyang_lidah_jogja/screens/login.dart'; // Import Login Page
+import 'package:goyang_lidah_jogja/screens/event_dashboard.dart';
+import 'package:goyang_lidah_jogja/screens/login.dart';
 import 'package:goyang_lidah_jogja/screens/register.dart';
+import 'package:goyang_lidah_jogja/screens/restaurant_dashboard.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/homepage.dart';
+import 'package:goyang_lidah_jogja/screens/edit_profile.dart';
+import 'package:goyang_lidah_jogja/services/user_service.dart';
+import 'package:goyang_lidah_jogja/screens/wishlist_list.dart';
 
-class LeftDrawer extends StatelessWidget {
-  final UserProfile? userProfile;
+class LeftDrawer extends StatefulWidget {
+  const LeftDrawer({super.key});
 
-  const LeftDrawer({super.key, this.userProfile});
+  @override
+  _LeftDrawerState createState() => _LeftDrawerState();
+}
+
+class _LeftDrawerState extends State<LeftDrawer> {
+  UserProfile? userProfile;
+  late CookieRequest request;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    request = Provider.of<CookieRequest>(context, listen: false);
+    fetchUserProfile();
+  }
+
+  Future<void> fetchUserProfile() async {
+    if (!mounted) return;
+
+    try {
+      UserProfile profile = await UserService(request).fetchUserProfile();
+      if (mounted) {
+        setState(() {
+          userProfile = profile;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          userProfile = null;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final request = Provider.of<CookieRequest>(context, listen: false);
-
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
         children: <Widget>[
-          // Drawer Header
+          // Drawer Header dengan gambar profil yang diperbarui
           UserAccountsDrawerHeader(
             decoration: BoxDecoration(
               color: Theme.of(context).colorScheme.primary,
             ),
             accountName: Text(
               userProfile != null ? userProfile!.username : 'Guest',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             accountEmail: userProfile != null
                 ? Text(userProfile!.email)
-                : Text('Please login'),
+                : const Text('Please login'),
             currentAccountPicture: userProfile != null
                 ? (userProfile!.profilePicture != null
                     ? CircleAvatar(
@@ -43,10 +75,10 @@ class LeftDrawer extends StatelessWidget {
                     : CircleAvatar(
                         child: Text(
                           userProfile!.username[0].toUpperCase(),
-                          style: TextStyle(fontSize: 24),
+                          style: const TextStyle(fontSize: 24),
                         ),
                       ))
-                : CircleAvatar(
+                : const CircleAvatar(
                     child: Icon(
                       Icons.person,
                       size: 30,
@@ -60,12 +92,13 @@ class LeftDrawer extends StatelessWidget {
             leading: const Icon(Icons.home_outlined),
             title: const Text('Main Page'),
             onTap: () {
+              if (!mounted) return;
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Main Page button pressed")),
+              );
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(builder: (context) => const MyHomePage()),
-              );
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Main Page button pressed")),
               );
             },
           ),
@@ -78,7 +111,8 @@ class LeftDrawer extends StatelessWidget {
                 leading: const Icon(Icons.event),
                 title: const Text('Manager Dashboard'),
                 onTap: () {
-                  Navigator.pop(context); // Close the drawer
+                  if (!mounted) return;
+                  Navigator.pop(context); // Tutup drawer
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -94,8 +128,10 @@ class LeftDrawer extends StatelessWidget {
                 title: const Text('Wishlists'),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Wishlist button pressed")),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const WishlistList()),
                   );
                 },
               ),
@@ -107,24 +143,42 @@ class LeftDrawer extends StatelessWidget {
                 title: const Text('Restaurant Dashboard'),
                 onTap: () {
                   Navigator.pop(context); // Close the drawer
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Restaurant Dashboard button pressed")),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RestaurantDashboardPage(),
+                    ),
                   );
                 },
               ),
 
             // Separator
-            Divider(),
+            const Divider(),
 
             // 3. Profile Page
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text('Profile'),
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Profile button pressed")),
+              onTap: () async {
+                if (!mounted) return;
+                Navigator.pop(context); // Tutup drawer
+
+                // Navigasi ke EditProfileScreen dan tunggu hasilnya
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const EditProfileScreen()),
                 );
+
+                // Refresh profil setelah kembali
+                fetchUserProfile();
+
+                // Jika hasilnya true, tampilkan SnackBar sukses
+                if (result == true && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Profil berhasil diperbarui")),
+                  );
+                }
               },
             ),
 
@@ -133,10 +187,11 @@ class LeftDrawer extends StatelessWidget {
               leading: const Icon(Icons.rate_review),
               title: const Text('My Reviews'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
+                if (!mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text("My Reviews button pressed")),
                 );
+                Navigator.pop(context); // Tutup drawer
               },
             ),
 
@@ -145,9 +200,10 @@ class LeftDrawer extends StatelessWidget {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                final response = await request.logout(
-                    "http://127.0.0.1:8000/auth/logout/");
-                if (response['status'] == true || response['status'] == 'success') {
+                final response =
+                    await request.logout("http://127.0.0.1:8000/auth/logout/");
+                if (response['status'] == true ||
+                    response['status'] == 'success') {
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const MyHomePage()),
@@ -156,6 +212,10 @@ class LeftDrawer extends StatelessWidget {
                     const SnackBar(
                       content: Text('Logout berhasil!'),
                     ),
+                  );
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyHomePage()),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -167,43 +227,42 @@ class LeftDrawer extends StatelessWidget {
               },
             ),
           ] else ...[
-            // If user is not authenticated, show Login
+            // Jika pengguna belum autentikasi, tampilkan Login
             ListTile(
               leading: const Icon(Icons.login),
               title: const Text('Login'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Login button pressed")),
+                );
+                Navigator.pop(context); // Tutup drawer
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const LoginPage()),
                 );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Login button pressed")),
-                );
               },
             ),
 
-            // Register Button (Optional)
+            // Register Button
             ListTile(
               leading: const Icon(Icons.app_registration),
               title: const Text('Register'),
               onTap: () {
-                Navigator.pop(context); // Close the drawer
+                if (!mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Register button pressed")),
+                );
+                Navigator.pop(context); // Tutup drawer
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => const RegisterPage()),
                 );
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Register button pressed")),
-                );
               },
             ),
           ],
-
-          
         ],
       ),
     );
   }
 }
-

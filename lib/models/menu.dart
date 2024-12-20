@@ -1,11 +1,10 @@
-// menu.dart
-// To parse this JSON data, do
-//
-//     final menu = menuFromJson(jsonString);
-
 import 'dart:convert';
 import 'restaurant.dart';
 import 'tag.dart';
+
+// Menu menuFromJson(String str) => Menu.fromJson(json.decode(str));
+
+// String menuToJson(Menu data) => json.encode(data.toJson());
 
 class Menu {
   List<MenuElement> menus;
@@ -29,9 +28,10 @@ class MenuElement {
   String name;
   String description;
   int price;
-  String image;
+  String? image;
   Restaurant restaurant;
-  List<int>? tagIds; // Menggunakan ID saja untuk menghindari dependencies yang kompleks
+  List<int>?
+      tagIds; // Menggunakan ID saja untuk menghindari dependencies yang kompleks
 
   MenuElement({
     required this.id,
@@ -45,10 +45,10 @@ class MenuElement {
 
   factory MenuElement.fromJson(Map<String, dynamic> json) => MenuElement(
         id: json["id"],
-        name: json["name"],
-        description: json["description"],
-        price: json["price"],
-        image: json["image"],
+        name: json["name"] ?? "Unnamed Menu",
+        description: json["description"] ?? "",
+        price: json["price"] ?? 0,
+        image: json["image"] ?? "",
         restaurant: Restaurant.fromJson(json["restaurant"]),
         tagIds: json["tags"] != null
             ? List<int>.from(json["tags"].map((x) => x["id"]))
