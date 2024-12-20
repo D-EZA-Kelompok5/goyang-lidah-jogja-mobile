@@ -5,7 +5,7 @@ import 'package:goyang_lidah_jogja/screens/ulasGoyangan.dart'; // Import UlasGoy
 import 'package:goyang_lidah_jogja/models/menu.dart';
 
 class MenuDetailPage extends StatelessWidget {
-  final Menu menu;
+  final MenuElement menu;
 
   const MenuDetailPage({Key? key, required this.menu}) : super(key: key);
 
@@ -30,13 +30,14 @@ class MenuDetailPage extends StatelessWidget {
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.network(
-                menu.image,
+                menu.image ?? '',
                 width: double.infinity,
                 height: 200,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
                   color: Colors.grey[200],
-                  child: Icon(Icons.broken_image, size: 100, color: Colors.grey),
+                  child:
+                      Icon(Icons.broken_image, size: 100, color: Colors.grey),
                 ),
               ),
             ),

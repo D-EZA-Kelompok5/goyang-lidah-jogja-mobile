@@ -3,6 +3,7 @@ import 'package:goyang_lidah_jogja/models/user_profile.dart';
 import 'package:goyang_lidah_jogja/screens/event_dashboard.dart';
 import 'package:goyang_lidah_jogja/screens/login.dart';
 import 'package:goyang_lidah_jogja/screens/register.dart';
+import 'package:goyang_lidah_jogja/screens/restaurant_dashboard.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/homepage.dart';
@@ -30,7 +31,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
 
   Future<void> fetchUserProfile() async {
     if (!mounted) return;
-    
+
     try {
       UserProfile profile = await UserService(request).fetchUserProfile();
       if (mounted) {
@@ -120,7 +121,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
                 },
               ),
 
-             // Customer Wishlist
+            // Customer Wishlist
             if (userProfile!.role == Role.CUSTOMER)
               ListTile(
                 leading: const Icon(Icons.favorite_border),
@@ -129,7 +130,8 @@ class _LeftDrawerState extends State<LeftDrawer> {
                   Navigator.pop(context); // Close the drawer
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const WishlistList()),
+                    MaterialPageRoute(
+                        builder: (context) => const WishlistList()),
                   );
                 },
               ),
@@ -140,12 +142,13 @@ class _LeftDrawerState extends State<LeftDrawer> {
                 leading: const Icon(Icons.restaurant),
                 title: const Text('Restaurant Dashboard'),
                 onTap: () {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text("Restaurant Dashboard button pressed")),
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RestaurantDashboardPage(),
+                    ),
                   );
-                  Navigator.pop(context); // Tutup drawer
                 },
               ),
 
@@ -197,12 +200,14 @@ class _LeftDrawerState extends State<LeftDrawer> {
               leading: const Icon(Icons.logout),
               title: const Text('Logout'),
               onTap: () async {
-                final response = await request.logout(
-                    "http://127.0.0.1:8000/auth/logout/");
-                if (!mounted) return;
-                
+                final response =
+                    await request.logout("http://127.0.0.1:8000/auth/logout/");
                 if (response['status'] == true ||
                     response['status'] == 'success') {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => const MyHomePage()),
+                  );
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Logout berhasil!'),

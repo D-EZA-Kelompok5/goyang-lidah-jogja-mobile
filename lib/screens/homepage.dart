@@ -25,7 +25,7 @@ class _MyHomePageState extends State<MyHomePage> {
   UserProfile? userProfile;
   bool isLoading = true;
 
-  List<Menu> menus = []; // Menyimpan data menu dari API
+  List<MenuElement> menus = []; // Menyimpan data menu dari API
   bool isLoadingMenus = true; // Status loading untuk menu
 
   @override
@@ -54,7 +54,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _fetchMenus() async {
     try {
-      List<Menu> fetchedMenus = await fetchMenus(); // Ambil data dari API
+      List<MenuElement> fetchedMenus =
+          await fetchMenus(); // Ambil data dari API
       setState(() {
         menus = fetchedMenus;
         isLoadingMenus = false;
@@ -83,12 +84,15 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Row(
               children: [
-                Icon(Icons.fastfood, size: 30, color: Colors.deepPurple), // Warna ditambahkan
+                Icon(Icons.fastfood,
+                    size: 30, color: Colors.deepPurple), // Warna ditambahkan
                 SizedBox(width: 10),
-                Text('GoyangLidahJogja', style: TextStyle(fontSize: 20, color: Colors.deepPurple)),
+                Text('GoyangLidahJogja',
+                    style: TextStyle(fontSize: 20, color: Colors.deepPurple)),
               ],
             ),
-            Icon(Icons.search, color: Colors.deepPurple), // Ikon search dengan warna
+            Icon(Icons.search,
+                color: Colors.deepPurple), // Ikon search dengan warna
           ],
         ),
         backgroundColor: Colors.white,
@@ -108,7 +112,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     userProfile!.profilePicture != null
                         ? CircleAvatar(
                             radius: 30,
-                            backgroundImage: NetworkImage(userProfile!.profilePicture!),
+                            backgroundImage:
+                                NetworkImage(userProfile!.profilePicture!),
                           )
                         : const CircleAvatar(
                             radius: 30,
@@ -120,11 +125,13 @@ class _MyHomePageState extends State<MyHomePage> {
                       children: [
                         Text(
                           userProfile!.username,
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Text(
                           userProfile!.roleDisplay, // Menggunakan getter
-                          style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                          style:
+                              TextStyle(fontSize: 14, color: Colors.grey[600]),
                         ),
                       ],
                     ),
@@ -161,7 +168,8 @@ class _MyHomePageState extends State<MyHomePage> {
                     borderRadius: BorderRadius.circular(20),
                     borderSide: BorderSide(color: Colors.grey),
                   ),
-                  contentPadding: EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                  contentPadding:
+                      EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 ),
               ),
             ),
@@ -170,13 +178,18 @@ class _MyHomePageState extends State<MyHomePage> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.builder(
-                physics: NeverScrollableScrollPhysics(), // Nonaktifkan scroll pada GridView
+                physics:
+                    NeverScrollableScrollPhysics(), // Nonaktifkan scroll pada GridView
                 shrinkWrap: true, // Membatasi ukuran GridView
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2, // Responsiveness
+                  crossAxisCount: MediaQuery.of(context).size.width > 600
+                      ? 3
+                      : 2, // Responsiveness
                   crossAxisSpacing: 15,
                   mainAxisSpacing: 15,
-                  childAspectRatio: MediaQuery.of(context).size.width > 600 ? 0.8 : 0.75, // Responsiveness
+                  childAspectRatio: MediaQuery.of(context).size.width > 600
+                      ? 0.8
+                      : 0.75, // Responsiveness
                 ),
                 itemCount: isLoadingMenus ? 6 : menus.length,
                 itemBuilder: (context, index) {
@@ -196,7 +209,8 @@ class _MyHomePageState extends State<MyHomePage> {
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               'Loading...',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -223,16 +237,19 @@ class _MyHomePageState extends State<MyHomePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(15)),
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(15)),
                             child: Image.network(
-                              menu.image,
+                              menu.image ?? '',
                               height: 120,
                               width: double.infinity,
                               fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) => Container(
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
                                 height: 120,
                                 color: Colors.grey[200],
-                                child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                                child: Icon(Icons.broken_image,
+                                    size: 50, color: Colors.grey),
                               ),
                             ),
                           ),
@@ -240,16 +257,19 @@ class _MyHomePageState extends State<MyHomePage> {
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               menu.name,
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
                             child: Text(
                               'Rp ${menu.price.toStringAsFixed(2)}',
-                              style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                              style: TextStyle(
+                                  color: Colors.grey[600], fontSize: 14),
                             ),
                           ),
                         ],

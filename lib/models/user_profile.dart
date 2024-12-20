@@ -76,7 +76,7 @@ class UserProfile {
         "owned_restaurant": ownedRestaurant?.toJson(),
       };
 
-  // Getter to get the display representation of Role
+  // Getter untuk mendapatkan representasi string dari Role
   String get roleDisplay =>
       roleValues.reverse[role]!.replaceAll('_', ' ').toUpperCase();
 
