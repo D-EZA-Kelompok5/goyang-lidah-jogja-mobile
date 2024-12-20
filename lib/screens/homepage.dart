@@ -98,8 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.white,
         elevation: 2.0, // Bayangan ringan untuk tampilan mobile
       ),
-      drawer: LeftDrawer(
-          userProfile: userProfile), // Pass UserProfile ke LeftDrawer
+      drawer: LeftDrawer(), // Pass UserProfile ke LeftDrawer
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
