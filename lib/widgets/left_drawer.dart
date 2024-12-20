@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/homepage.dart';
 import 'package:goyang_lidah_jogja/screens/edit_profile.dart';
 import 'package:goyang_lidah_jogja/services/user_service.dart';
+import 'package:goyang_lidah_jogja/screens/wishlist_list.dart';
 
 class LeftDrawer extends StatefulWidget {
   const LeftDrawer({super.key});
@@ -119,17 +120,17 @@ class _LeftDrawerState extends State<LeftDrawer> {
                 },
               ),
 
-            // Customer Wishlist
+             // Customer Wishlist
             if (userProfile!.role == Role.CUSTOMER)
               ListTile(
                 leading: const Icon(Icons.favorite_border),
                 title: const Text('Wishlists'),
                 onTap: () {
-                  if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Wishlist button pressed")),
+                  Navigator.pop(context); // Close the drawer
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const WishlistList()),
                   );
-                  Navigator.pop(context); // Tutup drawer
                 },
               ),
 

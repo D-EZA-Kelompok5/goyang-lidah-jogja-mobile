@@ -5,6 +5,7 @@ import '../models/user_profile.dart';
 import '../services/user_service.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:goyang_lidah_jogja/screens/edit_preferences.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({Key? key}) : super(key: key);
@@ -267,13 +268,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       children: [
                         ElevatedButton(
                           onPressed: () {
-                            // Navigasi ke halaman Edit Preferences
-                            Navigator.pushNamed(
-                                context, '/edit_preferences');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const EditPreferencesScreen()),
+                            );
                           },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade600,
-                          ),
                           child: const Text('Edit Preferences'),
                         ),
                         ElevatedButton(
