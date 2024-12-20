@@ -13,7 +13,7 @@ class EditPreferencesScreen extends StatefulWidget {
 
 class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   List<TagElement> _allTags = [];
-  List<int> _selectedTags = [];
+  List<int?> _selectedTags = [];
   bool _isLoading = true;
   late CookieRequest request;
   late UserService userService;
@@ -29,7 +29,8 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     userService = UserService(request);
     try {
       List<TagElement> tags = await userService.fetchAllTags();
-      List<TagElement> userPreferences = await userService.fetchUserPreferences();
+      List<TagElement> userPreferences =
+          await userService.fetchUserPreferences();
       setState(() {
         _allTags = tags;
         _selectedTags = userPreferences.map((tag) => tag.id).toList();
