@@ -125,11 +125,49 @@ class _WishlistListState extends State<WishlistList> {
                               child: const Text('Edit', style: TextStyle(color: Colors.white)),
                             ),
                             OutlinedButton(
-                              onPressed: () {
-                                // Aksi Delete
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("Delete: ${item.menu.name}")),
-                                );
+                              onPressed: () async {
+                                try {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) {
+                                      return AlertDialog(
+                                        title: const Text('Confirm Deletion'),
+                                        content: Text('Are you sure you want to delete "${item.menu.name}" from wishlist?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed:  () => Navigator.pop(context, true),
+                                            child: const Text('Delete'),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                  
+                                  // Jika pengguna tidak mengonfirmasi, keluar dari aksi
+                                  if (confirm != true) return;
+
+                                  // Panggil service untuk menghapus wishlist
+                                  await wishlistService.deleteWishlist(item.id);
+
+                                  // Tampilkan snackbar sukses
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("${item.menu.name} deleted successfully.")),
+                                  );
+
+                                  // Perbarui daftar wishlist setelah penghapusan
+                                  setState(() {
+                                    futureWishlists = wishlistService.fetchWishlists();
+                                  });
+                                } catch (error) {
+                                  // Tangani error dan tampilkan pesan
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Failed to delete: $error')),
+                                  );
+                                }  
                               },
                               style: OutlinedButton.styleFrom(
                                 foregroundColor: Colors.black,
