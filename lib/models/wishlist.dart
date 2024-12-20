@@ -1,79 +1,89 @@
-// To parse this JSON data, do
-//
-//     final wishlist = wishlistFromJson(jsonString);
+// lib/models/wishlist.dart
 
 import 'dart:convert';
-import 'user_profile.dart';
-import 'Menu.dart';
 
-Wishlist wishlistFromJson(String str) => Wishlist.fromJson(json.decode(str));
+Wishlist productFromJson(String str) => Wishlist.fromJson(json.decode(str));
 
-String wishlistToJson(Wishlist data) => json.encode(data.toJson());
+String productToJson(Wishlist data) => json.encode(data.toJson());
 
 class Wishlist {
-    List<WishlistElement> wishlists;
+  List<WishlistElement> wishlists;
 
-    Wishlist({
-        required this.wishlists,
-    });
+  Wishlist({
+    required this.wishlists,
+  });
 
-    factory Wishlist.fromJson(Map<String, dynamic> json) => Wishlist(
-        wishlists: List<WishlistElement>.from(json["wishlists"].map((x) => WishlistElement.fromJson(x))),
-    );
+  factory Wishlist.fromJson(Map<String, dynamic> json) => Wishlist(
+        wishlists: List<WishlistElement>.from(
+            json["wishlists"].map((x) => WishlistElement.fromJson(x))),
+      );
 
-    Map<String, dynamic> toJson() => {
+  Map<String, dynamic> toJson() => {
         "wishlists": List<dynamic>.from(wishlists.map((x) => x.toJson())),
-    };
+      };
 }
 
 class WishlistElement {
-    String model;
-    int pk;
-    Fields fields;
+  int id;
+  String catatan;
+  String status;
+  MenuItem menu;
 
-    WishlistElement({
-        required this.model,
-        required this.pk,
-        required this.fields,
-    });
+  WishlistElement({
+    required this.id,
+    required this.catatan,
+    required this.status,
+    required this.menu,
+  });
 
-    factory WishlistElement.fromJson(Map<String, dynamic> json) => WishlistElement(
-        model: json["model"],
-        pk: json["pk"],
-        fields: Fields.fromJson(json["fields"]),
-    );
+  factory WishlistElement.fromJson(Map<String, dynamic> json) => WishlistElement(
+        id: json["id"],
+        catatan: json["catatan"] ?? '',
+        status: json["status"] ?? 'BELUM',
+        menu: MenuItem.fromJson(json["menu"]),
+      );
 
-    Map<String, dynamic> toJson() => {
-        "model": model,
-        "pk": pk,
-        "fields": fields.toJson(),
-    };
-}
 
-class Fields {
-    UserProfile user;
-    MenuElement menu;
-    String catatan;
-    String status;
-
-    Fields({
-        required this.user,
-        required this.menu,
-        required this.catatan,
-        required this.status,
-    });
-
-    factory Fields.fromJson(Map<String, dynamic> json) => Fields(
-        user: UserProfile.fromJson(json["user"]),
-        menu: MenuElement.fromJson(json["menu"]),
-        catatan: json["catatan"],
-        status: json["status"],
-    );
-
-    Map<String, dynamic> toJson() => {
-        "user": user.toJson(),
-        "menu": menu.toJson(),
+  Map<String, dynamic> toJson() => {
+        "id": id,
         "catatan": catatan,
         "status": status,
-    };
+        "menu": menu.toJson(),
+      };
+}
+
+class MenuItem {
+  int id;
+  String name;
+  String description;
+  double price;
+  String image;
+  String restaurantName;
+
+  MenuItem({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.price,
+    required this.image,
+    required this.restaurantName,
+  });
+
+  factory MenuItem.fromJson(Map<String, dynamic> json) => MenuItem(
+        id: json["id"],
+        name: json["name"],
+        description: json["description"],
+        price: (json["price"] as num).toDouble(),
+        image: json["image"],
+        restaurantName: json["restaurant_name"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "name": name,
+        "description": description,
+        "price": price,
+        "image": image,
+        "restaurant_name": restaurantName,
+      };
 }

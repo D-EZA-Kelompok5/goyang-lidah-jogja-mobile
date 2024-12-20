@@ -1,6 +1,10 @@
 // lib/screens/wishlist_list.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import '../models/wishlist.dart';
+import '../services/wishlist_service.dart';
 
 class WishlistList extends StatefulWidget {
   const WishlistList({Key? key}) : super(key: key);
@@ -10,72 +14,33 @@ class WishlistList extends StatefulWidget {
 }
 
 class _WishlistListState extends State<WishlistList> {
-  late Future<List<WishlistItem>> futureWishlist;
+  late Future<List<WishlistElement>> futureWishlists;
+  late WishlistService wishlistService;
 
   @override
   void initState() {
     super.initState();
-    futureWishlist = fetchWishlist();
-  }
-
-  Future<List<WishlistItem>> fetchWishlist() async {
-    await Future.delayed(Duration(seconds: 2));
-    return [
-      WishlistItem(
-        username: "JohnDoe",
-        email: "john@example.com",
-        role: "CUSTOMER",
-        bio: "Food lover",
-        profilePicture: null,
-        reviewCount: 5,
-        level: "SILVER",
-        preferences: [],
-        menuTitle: "Nasi Goreng",
-        menuDescription: "Delicious fried rice",
-        price: 15000,
-        image: null, 
-        restaurantName: "Jogja Food Place",
-        tagIds: [1, 2],
-        catatan: "Tolong pedas",
-        status: "BELUM",
-      ),
-      WishlistItem(
-        username: "JaneSmith",
-        email: "jane@example.com",
-        role: "CUSTOMER",
-        bio: "Enjoys spicy food",
-        profilePicture: null,
-        reviewCount: 3,
-        level: "GOLD",
-        preferences: [],
-        menuTitle: "Sate Ayam",
-        menuDescription: "Grilled chicken satay",
-        price: 20000,
-        image: null, 
-        restaurantName: "Ayam Sate House",
-        tagIds: [3],
-        catatan: "Tanpa kacang",
-        status: "SUDAH",
-      ),
-    ];
+    final request = Provider.of<CookieRequest>(context, listen: false);
+    wishlistService = WishlistService(request);
+    futureWishlists = wishlistService.fetchWishlists();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Your Wishlist'),
+        title: const Text('Your Wishlist'),
         backgroundColor: Theme.of(context).colorScheme.secondary,
       ),
-      body: FutureBuilder<List<WishlistItem>>(
-        future: futureWishlist,
+      body: FutureBuilder<List<WishlistElement>>(
+        future: futureWishlists,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
+            return const Center(child: CircularProgressIndicator());
           } else if (snapshot.hasError) {
             return Center(child: Text('Error: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Your wishlist is empty.'));
+            return const Center(child: Text('Your wishlist is empty.'));
           } else {
             final wishlists = snapshot.data!;
             return ListView.builder(
@@ -83,97 +48,95 @@ class _WishlistListState extends State<WishlistList> {
               itemBuilder: (context, index) {
                 final item = wishlists[index];
                 return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   elevation: 4,
+                  color: Colors.green[50],
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Theme.of(context).colorScheme.primary,
-                              child: Text(
-                                item.username.isNotEmpty
-                                    ? item.username[0].toUpperCase()
-                                    : '?',
-                                style: TextStyle(color: Colors.white),
-                              ),
+                        // Menu Image
+                        if (item.menu.image.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8.0),
+                            child: Image.network(
+                              item.menu.image,
+                              height: 200,
+                              width: double.infinity,
+                              fit: BoxFit.cover,
                             ),
-                            SizedBox(width: 10),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  item.username,
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  item.email,
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 10),
+                          ),
+                        const SizedBox(height: 10),
+                        // Menu Name
                         Text(
-                          'Menu: ${item.menuTitle}',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                          item.menu.name,
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 5),
+                        // Restaurant Name
                         Text(
-                          'Description: ${item.menuDescription}',
-                          style: TextStyle(fontSize: 14),
+                          item.menu.restaurantName,
+                          style: const TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
                         ),
-                        SizedBox(height: 5),
+                        const SizedBox(height: 5),
+                        // Description
                         Text(
-                          'Price: Rp${item.price}',
-                          style: TextStyle(fontSize: 16),
+                          item.menu.description,
+                          style: const TextStyle(fontSize: 14),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(height: 5),
+                        const SizedBox(height: 10),
+                        // Price
                         Text(
-                          'Restaurant: ${item.restaurantName}',
-                          style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                          'Rp${item.menu.price.toStringAsFixed(2)}',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                         ),
-                        SizedBox(height: 5),
-                        // Bagian Catatan dan Status
+                        const SizedBox(height: 5),
+                        // Catatan
                         Text(
-                          'Catatan: ${item.catatan}',
-                          style: TextStyle(fontSize: 14),
+                          'Catatan: ${item.catatan.isNotEmpty ? item.catatan : 'Tidak ada catatan'}',
+                          style: const TextStyle(fontSize: 14),
                         ),
-                        SizedBox(height: 5),
+                        const SizedBox(height: 5),
+                        // Status
                         Text(
-                          'Status: ${item.status}',
+                          'Status: ${item.status == 'SUDAH' ? 'Sudah Pernah Dibeli' : 'Belum Pernah Dibeli'}',
                           style: TextStyle(
                             fontSize: 14,
-                            color: item.status.toLowerCase() == 'belum'
-                                ? Colors.orange
-                                : Colors.green,
+                            color: item.status.toLowerCase() == 'belum' ? Colors.orange : Colors.green,
                           ),
                         ),
-                        SizedBox(height: 10),
-                        // Tombol Select
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                      "Selected: ${item.menuTitle} by ${item.username}"),
-                                ),
-                              );
-                            },
-                            child: Text('Select'),
-                          ),
+                        const SizedBox(height: 10),
+                        // Tombol Edit & Delete (opsional)
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            ElevatedButton(
+                              onPressed: () {
+                                // Aksi Edit
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Edit: ${item.menu.name}")),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.black,
+                              ),
+                              child: const Text('Edit', style: TextStyle(color: Colors.white)),
+                            ),
+                            OutlinedButton(
+                              onPressed: () {
+                                // Aksi Delete
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text("Delete: ${item.menu.name}")),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.black,
+                              ),
+                              child: const Text('Delete'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -186,42 +149,4 @@ class _WishlistListState extends State<WishlistList> {
       ),
     );
   }
-}
-
-class WishlistItem {
-  final String username;
-  final String email;
-  final String role;
-  final String bio;
-  final String? profilePicture;
-  final int reviewCount;
-  final String level;
-  final List<dynamic>? preferences;
-  final String menuTitle;
-  final String menuDescription;
-  final int price;
-  final String? image;
-  final String restaurantName;
-  final List<int> tagIds;
-  final String catatan;
-  final String status;
-
-  WishlistItem({
-    required this.username,
-    required this.email,
-    required this.role,
-    required this.bio,
-    this.profilePicture,
-    required this.reviewCount,
-    required this.level,
-    this.preferences,
-    required this.menuTitle,
-    required this.menuDescription,
-    required this.price,
-    this.image,
-    required this.restaurantName,
-    required this.tagIds,
-    required this.catatan,
-    required this.status,
-  });
 }
