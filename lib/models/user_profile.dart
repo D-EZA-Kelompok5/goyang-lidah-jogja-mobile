@@ -1,7 +1,5 @@
-// lib/models/user_profile.dart
-
-// Import yang diperlukan
 import 'tag.dart';
+import 'restaurant.dart';
 
 enum Level { BEGINNER, BRONZE, SILVER, GOLD }
 
@@ -30,6 +28,7 @@ class UserProfile {
   int reviewCount;
   Level level;
   List<TagElement>? preferences;
+  Restaurant? ownedRestaurant;
 
   UserProfile({
     required this.userId,
@@ -41,6 +40,7 @@ class UserProfile {
     required this.reviewCount,
     required this.level,
     this.preferences,
+    this.ownedRestaurant,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -56,6 +56,9 @@ class UserProfile {
             ? List<TagElement>.from(
                 json["preferences"].map((x) => TagElement.fromJson(x)))
             : null,
+        ownedRestaurant: json["owned_restaurant"] != null
+            ? Restaurant.fromJson(json["owned_restaurant"])
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
@@ -70,12 +73,14 @@ class UserProfile {
         "preferences": preferences != null
             ? List<dynamic>.from(preferences!.map((x) => x.toJson()))
             : null,
+        "owned_restaurant": ownedRestaurant?.toJson(),
       };
 
-  // Getter untuk mendapatkan representasi string dari Role
-  String get roleDisplay => roleValues.reverse[role]!.replaceAll('_', ' ').toUpperCase();
+  // Getter to get the display representation of Role
+  String get roleDisplay =>
+      roleValues.reverse[role]!.replaceAll('_', ' ').toUpperCase();
 
-  // Getter untuk mendapatkan representasi string dari Level
+  // Getter to get the display representation of Level
   String get levelDisplay => levelValues.reverse[level]!;
 }
 
