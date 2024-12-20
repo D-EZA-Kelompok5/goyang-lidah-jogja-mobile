@@ -9,7 +9,7 @@ class WishlistService {
 
   WishlistService(this.request);
 
-  Future<List<WishlistElement>> fetchWishlists() async {
+  Future<List<WishlistElement>> fetchWishlists(CookieRequest request) async {
     final response = await request.get('http://127.0.0.1:8000/wishlist/json');
 
     if (response == null || response is! Map<String, dynamic>) {
@@ -73,7 +73,7 @@ class WishlistService {
     }
   }
 
-  Future<void> deleteWishlist(int wishlistId) async {
+  Future<void> deleteWishlist(int wishlistId, CookieRequest request) async {
     final url =
         'http://127.0.0.1:8000/wishlist/delete-wishlist-flutter/$wishlistId/';
 
