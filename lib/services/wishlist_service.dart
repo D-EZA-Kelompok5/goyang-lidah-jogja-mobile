@@ -12,26 +12,20 @@ class WishlistService {
   Future<List<WishlistElement>> fetchWishlists() async {
     final response = await request.get('http://127.0.0.1:8000/wishlist/json');
 
-    // Cetak data yang di-fetch untuk debugging
-    print("Raw response: $response");
-
-    if (response == null) {
-      throw Exception('Failed to load wishlists: response is null');
+    if (response == null || response is! Map<String, dynamic>) {
+      throw Exception('Failed to load wishlists: response is invalid');
     }
 
-    if (response is Map<String, dynamic>) {
-      if (response.containsKey('wishlists')) {
-        Wishlist wishlist = Wishlist.fromJson(response);
-        // Cetak data setelah parsing
-        print("Parsed wishlists: ${wishlist.toJson()}");
-        return wishlist.wishlists;
-      } else {
-        throw Exception('Response does not contain "wishlists" key');
-      }
-    } else {
-      throw Exception('Unexpected response format');
+    // Pastikan response memiliki key "wishlists"
+    if (!response.containsKey('wishlists')) {
+      throw Exception('Response does not contain "wishlists" key');
     }
+
+    // Parse wishlists
+    List<dynamic> wishlistsData = response['wishlists'];
+    return wishlistsData.map((data) => WishlistElement.fromJson(data)).toList();
   }
+
 
   Future<void> createWishlist(WishlistElement wishlist) async {
     final data = {
