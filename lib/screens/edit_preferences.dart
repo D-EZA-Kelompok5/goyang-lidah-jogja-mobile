@@ -13,7 +13,7 @@ class EditPreferencesScreen extends StatefulWidget {
 
 class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   List<TagElement> _allTags = [];
-  List<int> _selectedTags = [];
+  List<int?> _selectedTags = [];
   bool _isLoading = true;
   late CookieRequest request;
   late UserService userService;

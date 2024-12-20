@@ -62,7 +62,7 @@ class UserService {
   }
 
   // Update user preferences (POST)
-  Future<void> updateUserPreferences(List<int> selectedTagIds) async {
+  Future<void> updateUserPreferences(List<int?> selectedTagIds) async {
     final data = selectedTagIds;
     final response = await request.post(
       '$baseUrl/userPreferences/api/preferences/',

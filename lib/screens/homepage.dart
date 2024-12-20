@@ -1,6 +1,5 @@
-// lib/screens/homepage.dart
-
 import 'package:flutter/material.dart';
+import 'package:goyang_lidah_jogja/models/wishlist.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/menu_detail.dart'; // Import MenuDetail page
 import 'package:goyang_lidah_jogja/widgets/left_drawer.dart'; // Import LeftDrawer
@@ -9,6 +8,7 @@ import '../services/auth_service.dart';
 import '../services/api_service.dart'; // Import fetchMenus() dan model Menu
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:goyang_lidah_jogja/models/menu.dart';
+import '../services/wishlist_service.dart'; // Service untuk add to wishlist
 
 class MyHomePage extends StatefulWidget {
   final UserProfile? userProfile;
@@ -27,21 +27,32 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<MenuElement> menus = []; // Menyimpan data menu dari API
   bool isLoadingMenus = true; // Status loading untuk menu
+  Map<int, int> wishlistIds = {}; // key: menuId, value: wishlistId
+
+  late CookieRequest request; // Menyimpan request untuk auth
+  late WishlistService wishlistService;
 
   @override
   void initState() {
     super.initState();
     _initializeUserProfile();
-    _fetchMenus(); // Fetch data menu dari API saat init
+    _fetchMenus();
   }
 
   Future<void> _initializeUserProfile() async {
-    final request = Provider.of<CookieRequest>(context, listen: false);
+    request = Provider.of<CookieRequest>(context, listen: false);
+    wishlistService = WishlistService(request); // Initialize WishlistService
+
     if (request.loggedIn) {
       AuthService authService = AuthService(request);
       UserProfile? profile = await authService.getUserProfile();
+      List<WishlistElement> existingWishlists = await wishlistService.fetchWishlists(request);
+      
       setState(() {
         userProfile = profile;
+        wishlistIds = {
+          for (var wishlist in existingWishlists) wishlist.menu.id: wishlist.id,
+        };
         isLoading = false;
       });
     } else {
@@ -68,10 +79,57 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  MenuItem menuElementToMenuItem(MenuElement menuElement) {
+    return MenuItem(
+      id: menuElement.id,
+      name: menuElement.name,
+      description: menuElement.description,
+      price: menuElement.price.toDouble(),
+      image: menuElement.image ?? '',
+      restaurantName: menuElement.restaurant.name,
+    );
+}
+Future<void> _toggleWishlist(MenuElement menu) async {
+  try {
+    //final menuItem = menuElementToMenuItem(menu); // Konversi MenuElement ke MenuItem
+
+    if (wishlistIds.containsKey(menu.id)) {
+      // Jika sudah ada di wishlist, hapus
+      final wishlistId = wishlistIds[menu.id]!;
+      await wishlistService.deleteWishlist(wishlistId, request);
+      
+      setState(() {
+        wishlistIds.remove(menu.id);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${menu.name} removed from wishlist.')),
+      );
+    } else {
+      // Jika belum ada, tambahkan
+      final wishlistId = await wishlistService.createWishlist(WishlistElement(
+        id: 0,
+        menu: menuElementToMenuItem(menu), // Gunakan hasil konversi
+        catatan: '',
+        status: 'BELUM',
+      ));
+      setState(() {
+        wishlistIds[menu.id] = wishlistId;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${menu.name} added to wishlist.')),
+      );
+    }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  }
+}
+
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      // Tampilkan indikator loading saat mengambil profil
       return Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
@@ -103,7 +161,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User Info Section (Hanya tampilkan jika userProfile tidak null)
             if (userProfile != null)
               Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -140,7 +197,6 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             if (userProfile != null) SizedBox(height: 20),
 
-            // Header Section: "Mau makan apa?"
             Center(
               child: Text(
                 'Mau makan apa?',
@@ -153,7 +209,6 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             SizedBox(height: 20),
 
-            // Search Bar
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: TextField(
@@ -174,22 +229,18 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
             ),
 
-            // Main Section: Grid of Menu (Menu Grid)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.builder(
-                physics:
-                    NeverScrollableScrollPhysics(), // Nonaktifkan scroll pada GridView
-                shrinkWrap: true, // Membatasi ukuran GridView
+                physics: NeverScrollableScrollPhysics(),
+                shrinkWrap: true,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: MediaQuery.of(context).size.width > 600
-                      ? 3
-                      : 2, // Responsiveness
+                  crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
                   crossAxisSpacing: 15,
                   mainAxisSpacing: 15,
                   childAspectRatio: MediaQuery.of(context).size.width > 600
                       ? 0.8
-                      : 0.75, // Responsiveness
+                      : 0.75,
                 ),
                 itemCount: isLoadingMenus ? 6 : menus.length,
                 itemBuilder: (context, index) {
@@ -219,6 +270,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   }
 
                   final menu = menus[index];
+                  final isInWishlist = wishlistIds.containsKey(menu.id);
+
                   return GestureDetector(
                     onTap: () {
                       Navigator.push(
@@ -236,22 +289,26 @@ class _MyHomePageState extends State<MyHomePage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ClipRRect(
-                            borderRadius:
-                                BorderRadius.vertical(top: Radius.circular(15)),
-                            child: Image.network(
-                              menu.image ?? '',
-                              height: 120,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) =>
-                                  Container(
-                                height: 120,
-                                color: Colors.grey[200],
-                                child: Icon(Icons.broken_image,
-                                    size: 50, color: Colors.grey),
+                          Stack(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.vertical(
+                                    top: Radius.circular(15)),
+                                child: Image.network(
+                                  menu.image ?? '',
+                                  height: 120,
+                                  width: double.infinity,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Container(
+                                    height: 120,
+                                    color: Colors.grey[200],
+                                    child: Icon(Icons.broken_image,
+                                        size: 50, color: Colors.grey),
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
                           Padding(
                             padding: const EdgeInsets.all(8.0),
@@ -266,13 +323,25 @@ class _MyHomePageState extends State<MyHomePage> {
                           Padding(
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                              Text(
                               'Rp ${menu.price.toStringAsFixed(2)}',
                               style: TextStyle(
                                   color: Colors.grey[600], fontSize: 14),
                             ),
+                            GestureDetector(
+                              onTap: () => _toggleWishlist(menu),
+                              child: Icon(
+                                isInWishlist ? Icons.favorite : Icons.favorite_border,
+                                color: isInWishlist ? Colors.red : Colors.grey,
+                              ),
+                            ),
+                          ],
                           ),
-                        ],
+                        ),
+                      ],
                       ),
                     ),
                   );
