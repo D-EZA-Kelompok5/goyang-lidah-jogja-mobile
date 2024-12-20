@@ -1,17 +1,35 @@
 // restaurant.dart
-// To parse this JSON data, do
-//
-//     final restaurant = restaurantFromJson(jsonString);
 
 // import 'dart:convert';
 import 'user_profile.dart';
 
-enum PriceRange { DOLLAR, DOLLAR_DOLLAR_DOLLAR }
+enum PriceRange { DOLLAR, DOLLAR_DOLLAR, DOLLAR_DOLLAR_DOLLAR }
 
 final priceRangeValues = EnumValues({
   "\$": PriceRange.DOLLAR,
+  "\$\$": PriceRange.DOLLAR_DOLLAR,
   "\$\$\$": PriceRange.DOLLAR_DOLLAR_DOLLAR,
 });
+
+class Owner {
+  final int id;
+  final String username;
+
+  Owner({
+    required this.id,
+    required this.username,
+  });
+
+  factory Owner.fromJson(Map<String, dynamic> json) => Owner(
+        id: json["id"],
+        username: json["username"],
+      );
+
+  Map<String, dynamic> toJson() => {
+        "id": id,
+        "username": username,
+      };
+}
 
 class Restaurant {
   int id;
@@ -21,7 +39,7 @@ class Restaurant {
   String category;
   PriceRange priceRange;
   String? image;
-  UserProfile owner;
+  Owner owner;
 
   Restaurant({
     required this.id,
@@ -34,7 +52,11 @@ class Restaurant {
     required this.owner,
   });
 
-  factory Restaurant.fromJson(Map<String, dynamic> json) => Restaurant(
+  factory Restaurant.fromJson(Map<String, dynamic> json) {
+    // Add debug print
+    print('Processing JSON: $json');
+    try {
+      return Restaurant(
         id: json["id"],
         name: json["name"],
         description: json["description"],
@@ -42,8 +64,14 @@ class Restaurant {
         category: json["category"],
         priceRange: priceRangeValues.map[json["price_range"]]!,
         image: json["image"],
-        owner: UserProfile.fromJson(json["owner"]),
+        owner: Owner.fromJson(json["owner"]),
       );
+    } catch (e) {
+      print('Error parsing Restaurant: $e');
+      print('Problematic JSON: $json');
+      rethrow;
+    }
+  }
 
   Map<String, dynamic> toJson() => {
         "id": id,

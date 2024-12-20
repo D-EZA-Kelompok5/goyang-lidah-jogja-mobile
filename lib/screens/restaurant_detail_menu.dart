@@ -24,12 +24,37 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   late RestaurantService _restaurantService;
   String _menuFilter = 'all';
   String _announcementFilter = 'all';
+  Restaurant? _restaurant;
+  List<MenuElement> _menus = [];
 
   @override
   void initState() {
     super.initState();
     final request = context.read<CookieRequest>();
     _restaurantService = RestaurantService(request);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final restaurant =
+          await _restaurantService.fetchRestaurantDetail(widget.restaurantId);
+      final menus = await _restaurantService.fetchRestaurantMenus(
+          widget.restaurantId, _menuFilter);
+
+      if (mounted) {
+        setState(() {
+          _restaurant = restaurant;
+          _menus = menus;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading data: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _refreshData() async {
@@ -247,6 +272,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
               }
 
               if (snapshot.hasError) {
+                print('Error in FutureBuilder: ${snapshot.error}');
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
 
@@ -293,20 +319,22 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
             // Menu Image
             AspectRatio(
               aspectRatio: 1,
-              child: Image.network(
-                menu.image,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    color: Colors.grey[200],
-                    child: const Icon(
-                      Icons.restaurant,
-                      size: 40,
-                      color: Colors.grey,
-                    ),
-                  );
-                },
-              ),
+              child: menu.image != null
+                  ? Image.network(
+                      menu.image!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.restaurant,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        );
+                      },
+                    )
+                  : _buildPlaceholderImage(),
             ),
 
             Padding(

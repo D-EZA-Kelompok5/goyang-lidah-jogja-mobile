@@ -73,7 +73,8 @@ class UserProfile {
       };
 
   // Getter untuk mendapatkan representasi string dari Role
-  String get roleDisplay => roleValues.reverse[role]!.replaceAll('_', ' ').toUpperCase();
+  String get roleDisplay =>
+      roleValues.reverse[role]!.replaceAll('_', ' ').toUpperCase();
 
   // Getter untuk mendapatkan representasi string dari Level
   String get levelDisplay => levelValues.reverse[level]!;

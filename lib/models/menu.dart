@@ -29,31 +29,43 @@ class MenuElement {
   String name;
   String description;
   int price;
-  String image;
+  String? image;
   Restaurant restaurant;
-  List<int>? tagIds; // Menggunakan ID saja untuk menghindari dependencies yang kompleks
+  List<int>?
+      tagIds; // Menggunakan ID saja untuk menghindari dependencies yang kompleks
 
   MenuElement({
     required this.id,
     required this.name,
     required this.description,
     required this.price,
-    required this.image,
+    this.image,
     required this.restaurant,
     this.tagIds,
   });
 
-  factory MenuElement.fromJson(Map<String, dynamic> json) => MenuElement(
+  factory MenuElement.fromJson(Map<String, dynamic> json) {
+    try {
+      String name = json["name"]?.toString() ?? ""; // Convert to string first
+      name = name.replaceAll("<!-- -->", '').trim();
+      if (name.isEmpty) name = "Untitled Menu";
+      return MenuElement(
         id: json["id"],
-        name: json["name"],
-        description: json["description"],
-        price: json["price"],
-        image: json["image"],
+        name: name,
+        description: json["description"] ?? "",
+        price: json["price"] ?? 0,
+        image: json["image"]?.toString(),
         restaurant: Restaurant.fromJson(json["restaurant"]),
         tagIds: json["tags"] != null
             ? List<int>.from(json["tags"].map((x) => x["id"]))
             : null,
       );
+    } catch (e) {
+      print('Error parsing MenuElement: $e');
+      print('Problematic JSON: $json');
+      rethrow;
+    }
+  }
 
   Map<String, dynamic> toJson() => {
         "id": id,

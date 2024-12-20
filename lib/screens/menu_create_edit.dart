@@ -67,9 +67,25 @@ class _MenuFormPageState extends State<MenuFormPage> {
       if (widget.menu == null) {
         // Create new menu
         await service.createMenu(widget.restaurantId, menuData);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Menu created successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       } else {
         // Update existing menu
         await service.updateMenu(widget.menu!.id, menuData);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Menu updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
       }
 
       if (mounted) {
@@ -143,6 +159,9 @@ class _MenuFormPageState extends State<MenuFormPage> {
                   }
                   if (int.tryParse(value) == null) {
                     return 'Please enter a valid number';
+                  }
+                  if (int.tryParse(value)! < 0) {
+                    return 'Please enter a positive number';
                   }
                   return null;
                 },

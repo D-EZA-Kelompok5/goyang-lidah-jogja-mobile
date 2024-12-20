@@ -24,9 +24,10 @@ class Tag {
 }
 
 class TagElement {
-  int id;
+  int? id;
   String name;
-  List<int>? menuIds; // Menggunakan ID saja untuk menghindari dependencies yang kompleks
+  List<int>?
+      menuIds; // Menggunakan ID saja` untuk menghindari dependencies yang kompleks
 
   TagElement({
     required this.id,

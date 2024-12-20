@@ -1,10 +1,14 @@
-// screens/event_dashboard.dart
+// event_dashboard.dart
+
 import 'package:flutter/material.dart';
 import '../models/event.dart';
-import '../models/user_profile.dart';
+import '../services/event_service.dart';
+import 'package:pbp_django_auth/pbp_django_auth.dart';
+import 'package:provider/provider.dart';
+import 'event_form_dialog.dart';
 
 class EventDashboard extends StatefulWidget {
-  const EventDashboard({super.key});
+  const EventDashboard({Key? key}) : super(key: key);
 
   @override
   _EventDashboardState createState() => _EventDashboardState();
@@ -12,90 +16,79 @@ class EventDashboard extends StatefulWidget {
 
 class _EventDashboardState extends State<EventDashboard> {
   String _filter = 'all';
-  Event _eventData = Event(events: [
-    EventElement(
-      id: 1,
-      title: 'Music Concert',
-      description: 'A great music concert.',
-      date: DateTime(2023, 10, 10),
-      time: '18:00',
-      location: 'Jakarta',
-      entranceFee: 50.0,
-      image: null,
-      createdBy: UserProfile(
-        userId: 1,
-        username: 'event_manager',
-        email: 'manager@example.com',
-        role: Role.EVENT_MANAGER, // Menggunakan enum Role
-        bio: 'Managing awesome events!',
-        reviewCount: 10,
-        level: Level.GOLD, // Menggunakan enum Level
-        preferences: null,
-      ),
-    ),
-    EventElement(
-      id: 2,
-      title: 'Art Exhibition',
-      description: 'Exhibition of modern art.',
-      date: DateTime(2023, 11, 5),
-      time: '10:00',
-      location: 'Bandung',
-      entranceFee: null,
-      image: null,
-      createdBy: UserProfile(
-        userId: 2,
-        username: 'artist_owner',
-        email: 'owner@example.com',
-        role: Role.EVENT_MANAGER, // Menggunakan enum Role
-        bio: 'Passionate about art.',
-        reviewCount: 5,
-        level: Level.SILVER, // Menggunakan enum Level
-        preferences: null,
-      ),
-    ),
-    // Tambahkan lebih banyak data dummy sesuai kebutuhan
-  ]);
+  List<Event> _events = [];
+  bool _isLoading = true;
+  late EventService eventService;
 
-  List<EventElement> get _filteredEvents {
-    if (_filter == 'free') {
-      return _eventData.events.where((event) => event.entranceFee == null).toList();
-    } else if (_filter == 'paid') {
-      return _eventData.events.where((event) => event.entranceFee != null).toList();
+  @override
+  void initState() {
+    super.initState();
+    final request = Provider.of<CookieRequest>(context, listen: false);
+    eventService = EventService(request);
+    _fetchEvents();
+  }
+
+  Future<void> _fetchEvents() async {
+    try {
+      List<Event> events = await eventService.fetchEvents();
+      setState(() {
+        _events = events;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      // Optional: Display error message to the user
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load events: $e')),
+      );
     }
-    return _eventData.events;
+  }
+
+  List<Event> get _filteredEvents {
+    if (_filter == 'free') {
+      return _events.where((event) => event.entranceFee == null).toList();
+    } else if (_filter == 'paid') {
+      return _events.where((event) => event.entranceFee != null).toList();
+    }
+    return _events;
   }
 
   void _openCreateModal() {
     showDialog(
       context: context,
       builder: (context) {
-        return const AlertDialog(
-          title: Text('Create New Event'),
-          content: Text('Event creation form goes here.'),
+        return EventFormDialog(
+          onSubmit: () async {
+            setState(() {
+              _isLoading = true;
+            });
+            await _fetchEvents();
+          },
         );
       },
     );
   }
 
-  void _handleEdit(EventElement event) {
+  void _handleEdit(Event event) {
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text('Edit Event: ${event.title}'),
-          content: const Text('Event editing form goes here.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
+        return EventFormDialog(
+          event: event,
+          onSubmit: () async {
+            setState(() {
+              _isLoading = true;
+            });
+            await _fetchEvents();
+          },
         );
       },
     );
   }
 
-  void _handleDelete(EventElement event) {
+  void _handleDelete(Event event) {
     showDialog(
       context: context,
       builder: (context) {
@@ -108,11 +101,20 @@ class _EventDashboardState extends State<EventDashboard> {
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () {
-                setState(() {
-                  _eventData.events.remove(event);
-                });
+              onPressed: () async {
                 Navigator.pop(context);
+                setState(() {
+                  _isLoading = true;
+                });
+                try {
+                  await eventService.deleteEvent(event.id);
+                  await _fetchEvents();
+                } catch (e) {
+                  // Optional: Display error message to the user
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to delete event: $e')),
+                  );
+                }
               },
               child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
@@ -122,7 +124,7 @@ class _EventDashboardState extends State<EventDashboard> {
     );
   }
 
-  Widget _buildEventRow(EventElement event) {
+  Widget _buildEventRow(Event event) {
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
       child: ListTile(
@@ -133,7 +135,6 @@ class _EventDashboardState extends State<EventDashboard> {
             Text('${event.date.toLocal().toIso8601String().split('T')[0]} at ${event.time}'),
             Text(event.location),
             Text(event.entranceFee != null ? 'Rp${event.entranceFee}' : 'Free'),
-            Text('Created by: ${event.createdBy.username}'),
           ],
         ),
         trailing: Row(
@@ -155,6 +156,15 @@ class _EventDashboardState extends State<EventDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Event Management Dashboard'),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Event Management Dashboard'),
@@ -163,7 +173,6 @@ class _EventDashboardState extends State<EventDashboard> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // Header with filter and create button
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -195,7 +204,6 @@ class _EventDashboardState extends State<EventDashboard> {
               ],
             ),
             const SizedBox(height: 20),
-            // Events List
             Expanded(
               child: _filteredEvents.isNotEmpty
                   ? ListView.builder(
