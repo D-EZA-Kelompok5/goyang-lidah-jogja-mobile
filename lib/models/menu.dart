@@ -45,10 +45,10 @@ class MenuElement {
 
   factory MenuElement.fromJson(Map<String, dynamic> json) => MenuElement(
         id: json["id"],
-        name: json["name"],
-        description: json["description"],
-        price: json["price"],
-        image: json["image"],
+        name: json["name"] ?? "Unnamed Menu",
+        description: json["description"] ?? "",
+        price: json["price"] ?? 0,
+        image: json["image"] ?? "",
         restaurant: Restaurant.fromJson(json["restaurant"]),
         tagIds: json["tags"] != null
             ? List<int>.from(json["tags"].map((x) => x["id"]))

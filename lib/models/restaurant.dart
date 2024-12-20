@@ -3,12 +3,15 @@
 // import 'dart:convert';
 import 'user_profile.dart';
 
-enum PriceRange { DOLLAR, DOLLAR_DOLLAR, DOLLAR_DOLLAR_DOLLAR }
+enum PriceRange { ONE, TWO, THREE, ONE_TO_TWO, ONE_TO_THREE, TWO_TO_THREE }
 
 final priceRangeValues = EnumValues({
-  "\$": PriceRange.DOLLAR,
-  "\$\$": PriceRange.DOLLAR_DOLLAR,
-  "\$\$\$": PriceRange.DOLLAR_DOLLAR_DOLLAR,
+  "\$": PriceRange.ONE,
+  "\$\$": PriceRange.TWO,
+  "\$\$\$": PriceRange.THREE,
+  "\$ - \$\$": PriceRange.ONE_TO_TWO,
+  "\$ - \$\$\$": PriceRange.ONE_TO_THREE,
+  "\$\$ - \$\$\$": PriceRange.TWO_TO_THREE,
 });
 
 class Owner {
