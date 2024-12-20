@@ -1,11 +1,10 @@
-// menu.dart
-// To parse this JSON data, do
-//
-//     final menu = menuFromJson(jsonString);
-
 import 'dart:convert';
 import 'restaurant.dart';
 import 'tag.dart';
+
+// Menu menuFromJson(String str) => Menu.fromJson(json.decode(str));
+
+// String menuToJson(Menu data) => json.encode(data.toJson());
 
 class Menu {
   List<MenuElement> menus;
@@ -39,33 +38,22 @@ class MenuElement {
     required this.name,
     required this.description,
     required this.price,
-    this.image,
+    required this.image,
     required this.restaurant,
     this.tagIds,
   });
 
-  factory MenuElement.fromJson(Map<String, dynamic> json) {
-    try {
-      String name = json["name"]?.toString() ?? ""; // Convert to string first
-      name = name.replaceAll("<!-- -->", '').trim();
-      if (name.isEmpty) name = "Untitled Menu";
-      return MenuElement(
+  factory MenuElement.fromJson(Map<String, dynamic> json) => MenuElement(
         id: json["id"],
-        name: name,
-        description: json["description"] ?? "",
-        price: json["price"] ?? 0,
-        image: json["image"]?.toString(),
+        name: json["name"],
+        description: json["description"],
+        price: json["price"],
+        image: json["image"],
         restaurant: Restaurant.fromJson(json["restaurant"]),
         tagIds: json["tags"] != null
             ? List<int>.from(json["tags"].map((x) => x["id"]))
             : null,
       );
-    } catch (e) {
-      print('Error parsing MenuElement: $e');
-      print('Problematic JSON: $json');
-      rethrow;
-    }
-  }
 
   Map<String, dynamic> toJson() => {
         "id": id,
