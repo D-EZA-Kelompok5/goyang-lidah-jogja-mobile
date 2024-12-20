@@ -51,7 +51,8 @@ class UserService {
 
   // Fetch user preferences (GET)
   Future<List<TagElement>> fetchUserPreferences() async {
-    final response = await request.get('$baseUrl/userPreferences/api/preferences/');
+    final response =
+        await request.get('$baseUrl/userPreferences/api/preferences/');
 
     if (response['status'] == 'success') {
       List<dynamic> data = response['data'];

@@ -30,7 +30,8 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
     userService = UserService(request);
     try {
       List<TagElement> tags = await userService.fetchAllTags();
-      List<TagElement> userPreferences = await userService.fetchUserPreferences();
+      List<TagElement> userPreferences =
+          await userService.fetchUserPreferences();
       setState(() {
         _allTags = tags;
         _selectedTags = userPreferences.map((tag) => tag.id).toList();
