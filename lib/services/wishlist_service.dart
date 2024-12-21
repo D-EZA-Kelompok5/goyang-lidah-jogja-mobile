@@ -1,5 +1,3 @@
-// lib/services/wishlist_service.dart
-
 import 'dart:convert';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/wishlist.dart';
@@ -16,7 +14,6 @@ class WishlistService {
       throw Exception('Failed to load wishlists: response is invalid');
     }
 
-    // Pastikan response memiliki key "wishlists"
     if (!response.containsKey('wishlists')) {
       throw Exception('Response does not contain "wishlists" key');
     }
