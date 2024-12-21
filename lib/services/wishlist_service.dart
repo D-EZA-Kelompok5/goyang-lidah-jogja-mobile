@@ -1,5 +1,3 @@
-// lib/services/wishlist_service.dart
-
 import 'dart:convert';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/wishlist.dart';
@@ -16,7 +14,6 @@ class WishlistService {
       throw Exception('Failed to load wishlists: response is invalid');
     }
 
-    // Pastikan response memiliki key "wishlists"
     if (!response.containsKey('wishlists')) {
       throw Exception('Response does not contain "wishlists" key');
     }
@@ -27,7 +24,7 @@ class WishlistService {
   }
 
 
-  Future<void> createWishlist(WishlistElement wishlist) async {
+  Future<int> createWishlist(WishlistElement wishlist) async {
     final data = {
       "menu_id": wishlist.menu.id,
       "catatan": wishlist.catatan,
@@ -47,6 +44,7 @@ class WishlistService {
       throw Exception(
           'Failed to create wishlist: ${response['message'] ?? 'unknown error'}');
     }
+    return response['id'];
   }
 
   Future<void> updateWishlist(WishlistElement wishlist) async {

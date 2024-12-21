@@ -12,11 +12,12 @@ import 'package:goyang_lidah_jogja/services/user_service.dart';
 import 'package:goyang_lidah_jogja/screens/wishlist_list.dart';
 
 class LeftDrawer extends StatefulWidget {
-  const LeftDrawer({super.key});
+  final VoidCallback onWishlistChanged;
+  const LeftDrawer({Key? key, required this.onWishlistChanged}) : super(key: key);
 
   @override
-  _LeftDrawerState createState() => _LeftDrawerState();
-}
+    _LeftDrawerState createState() => _LeftDrawerState();
+  }
 
 class _LeftDrawerState extends State<LeftDrawer> {
   UserProfile? userProfile;
@@ -131,7 +132,7 @@ class _LeftDrawerState extends State<LeftDrawer> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const WishlistList()),
+                        builder: (context) => WishlistList(onWishlistChanged: widget.onWishlistChanged)),
                   );
                 },
               ),

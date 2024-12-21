@@ -26,10 +26,10 @@ class RestaurantDetailPage extends StatefulWidget {
 class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   late RestaurantService _restaurantService;
   String _menuFilter = 'all';
+  String _announcementFilter = 'all';
   Restaurant? _restaurant;
   List<MenuElement> _menus = [];
-  List<AnnouncementElement> _announcements = [];
-  String _announcementFilter = 'newest';
+  List<Announcement> _announcements = [];
 
   @override
   void initState() {
@@ -37,6 +37,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     final request = context.read<CookieRequest>();
     _restaurantService = RestaurantService(request);
     _loadData();
+    _loadAnnouncements();
   }
 
   Future<void> _loadData() async {
@@ -56,6 +57,24 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading data: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadAnnouncements() async {
+    try {
+      final announcements =
+          await _restaurantService.fetchAnnouncements(widget.restaurantId);
+      if (mounted) {
+        setState(() {
+          _announcements = announcements;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading announcements: $e')),
         );
       }
     }
@@ -122,94 +141,6 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     }
   }
 
-  Future<void> _loadAnnouncements() async {
-    try {
-      final announcements =
-          await _restaurantService.fetchAnnouncements(widget.restaurantId);
-      if (mounted) {
-        setState(() {
-          _announcements = announcements;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading announcements: $e')),
-        );
-      }
-    }
-  }
-
-  Future<void> _createAnnouncement() async {
-    final formKey = GlobalKey<FormState>();
-    String title = '';
-    String message = '';
-
-    final result = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Create Announcement'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Title'),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
-                onSaved: (value) => title = value ?? '',
-              ),
-              TextFormField(
-                decoration: const InputDecoration(labelText: 'Message'),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
-                onSaved: (value) => message = value ?? '',
-                maxLines: 3,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                formKey.currentState?.save();
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text('Create'),
-          ),
-        ],
-      ),
-    );
-
-    if (result == true) {
-      try {
-        await _restaurantService.createAnnouncement(
-          widget.restaurantId,
-          {'title': title, 'message': message},
-        );
-        await _loadAnnouncements();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Announcement created successfully')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error creating announcement: $e')),
-          );
-        }
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -245,7 +176,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildRestaurantHeader(restaurant),
-                  _buildAnnouncementsSection(), // Show to all users
+                  _buildAnnouncementSection(),
                   _buildMenuSection(restaurant),
                 ],
               ),
@@ -382,7 +313,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.75,
+                  childAspectRatio: 0.8,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
@@ -404,8 +335,10 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     Widget menuContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AspectRatio(
-          aspectRatio: 1,
+        // Wrap the image in a Container with fixed height instead of AspectRatio
+        Container(
+          height: 160, // Fixed height for image container
+          width: double.infinity,
           child: menu.image != null
               ? Image.network(
                   menu.image!,
@@ -423,57 +356,198 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 )
               : _buildPlaceholderImage(),
         ),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                menu.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+        // Wrap content in Expanded to allow flexible sizing
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // Use minimum space needed
+              children: [
+                Text(
+                  menu.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                menu.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
+                const SizedBox(height: 4),
+                Expanded(
+                  child: Text(
+                    menu.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Rp ${menu.price.toString()}',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 4),
+                Text(
+                  'Rp ${menu.price.toString()}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
     );
 
     return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: widget.isOwner
-          ? InkWell(
-              onTap: () => _showMenuOptions(menu),
-              child: menuContent,
-            )
-          : menuContent, // No InkWell for non-owners
+        clipBehavior: Clip.antiAlias,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: InkWell(
+          onTap: () => _showMenuDetail(menu),
+          child: menuContent,
+        ));
+  }
+
+  // Add this new method to show the detailed popup
+  void _showMenuDetail(MenuElement menu) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Menu Image
+                if (menu.image != null)
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(menu.image!),
+                        fit: BoxFit.cover,
+                      ),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    height: 200,
+                    color: Colors.grey[200],
+                    child: const Icon(
+                      Icons.restaurant,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                  ),
+
+                // Menu Details
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              menu.name,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Rp ${menu.price.toString()}',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        menu.description,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Action Buttons - Only visible to owners
+                      if (widget.isOwner) ...[
+                        const Divider(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _navigateToMenuForm(menu: menu);
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.edit),
+                                  SizedBox(width: 8),
+                                  Text('Edit'),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _deleteMenu(menu);
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.delete),
+                                  SizedBox(width: 8),
+                                  Text('Delete'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
+                      // Close button for non-owners
+                      if (!widget.isOwner)
+                        Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -547,7 +621,41 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     );
   }
 
-  Widget _buildAnnouncementsSection() {
+  List<Announcement> _getSortedAnnouncements() {
+    List<Announcement> sorted = List.from(_announcements);
+    switch (_announcementFilter) {
+      case 'newest':
+        sorted.sort((a, b) => (b.pk ?? 0).compareTo(a.pk ?? 0));
+        break;
+      case 'oldest':
+        sorted.sort((a, b) => (a.pk ?? 0).compareTo(b.pk ?? 0));
+        break;
+      default:
+        // 'all'
+        break;
+    }
+    return sorted;
+  }
+
+  Widget _buildAnnouncementFilterDropdown() {
+    return DropdownButton<String>(
+      value: _announcementFilter,
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _announcementFilter = newValue;
+          });
+        }
+      },
+      items: const [
+        DropdownMenuItem(value: 'all', child: Text('All Announcements')),
+        DropdownMenuItem(value: 'newest', child: Text('Newest First')),
+        DropdownMenuItem(value: 'oldest', child: Text('Oldest First')),
+      ],
+    );
+  }
+
+  Widget _buildAnnouncementSection() {
     return Container(
       margin: const EdgeInsets.all(16),
       child: Column(
@@ -558,229 +666,89 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
             children: [
               const Text(
                 'Announcements',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               Row(
                 children: [
-                  // Filter dropdown
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade300),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: DropdownButton<String>(
-                      value: _announcementFilter,
-                      underline: Container(), // Remove the default underline
-                      icon: const Icon(Icons.sort),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _announcementFilter = newValue;
-                          });
-                        }
-                      },
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'newest',
-                          child: Text('Newest First'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'oldest',
-                          child: Text('Oldest First'),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  // Create button for owners
+                  _buildAnnouncementFilterDropdown(),
                   if (widget.isOwner)
-                    ElevatedButton.icon(
-                      onPressed: _createAnnouncement,
-                      icon: const Icon(Icons.add, color: Colors.white),
-                      label: const Text('Create',
-                          style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                      ),
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () => _showCreateAnnouncementDialog(null),
                     ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          FutureBuilder<List<AnnouncementElement>>(
-            future: _restaurantService.fetchAnnouncements(
-              widget.restaurantId,
-              filter: _announcementFilter,
-            ),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-
-              if (snapshot.hasError) {
-                return Center(child: Text('Error: ${snapshot.error}'));
-              }
-
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16.0),
-                    child: Text('No announcements yet'),
+          const SizedBox(height: 8),
+          if (_announcements.isEmpty)
+            const Text('No announcements available.')
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _getSortedAnnouncements().length,
+              itemBuilder: (context, index) {
+                final announcement = _getSortedAnnouncements()[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(announcement.title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [Text(announcement.message)],
+                    ),
+                    trailing: widget.isOwner
+                        ? IconButton(
+                            icon: const Icon(Icons.more_vert),
+                            onPressed: () =>
+                                _showAnnouncementOptions(announcement, index),
+                          )
+                        : null,
                   ),
                 );
-              }
-
-              return ListView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  final announcement = snapshot.data![index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 8),
-                    child: ListTile(
-                      title: Text(
-                        announcement.title,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(announcement.message),
-                      ),
-                      // Only show edit/delete options for owners
-                      trailing: widget.isOwner
-                          ? PopupMenuButton<String>(
-                              icon: const Icon(Icons.more_vert),
-                              onSelected: (value) async {
-                                if (value == 'edit') {
-                                  await _editAnnouncement(announcement);
-                                } else if (value == 'delete') {
-                                  await _deleteAnnouncement(announcement.id);
-                                }
-                              },
-                              itemBuilder: (context) => [
-                                const PopupMenuItem(
-                                  value: 'edit',
-                                  child: ListTile(
-                                    leading: Icon(Icons.edit),
-                                    title: Text('Edit'),
-                                  ),
-                                ),
-                                const PopupMenuItem(
-                                  value: 'delete',
-                                  child: ListTile(
-                                    leading: Icon(
-                                      Icons.delete,
-                                      color: Colors.red,
-                                    ),
-                                    title: Text(
-                                      'Delete',
-                                      style: TextStyle(color: Colors.red),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            )
-                          : null,
-                    ),
-                  );
-                },
-              );
-            },
-          ),
+              },
+            ),
         ],
       ),
     );
   }
 
-  Future<void> _editAnnouncement(AnnouncementElement announcement) async {
-    final formKey = GlobalKey<FormState>();
-    String title = announcement.title;
-    String message = announcement.message;
-
-    final result = await showDialog<bool>(
+  void _showAnnouncementOptions(Announcement announcement, int index) {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Announcement'),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                initialValue: announcement.title,
-                decoration: const InputDecoration(labelText: 'Title'),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
-                onSaved: (value) => title = value ?? '',
-              ),
-              TextFormField(
-                initialValue: announcement.message,
-                decoration: const InputDecoration(labelText: 'Message'),
-                validator: (value) =>
-                    value?.isEmpty ?? true ? 'Required' : null,
-                onSaved: (value) => message = value ?? '',
-                maxLines: 3,
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              if (formKey.currentState?.validate() ?? false) {
-                formKey.currentState?.save();
-                Navigator.pop(context, true);
-              }
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Edit Announcement'),
+            onTap: () {
+              Navigator.pop(context);
+              _showCreateAnnouncementDialog(announcement);
             },
-            child: const Text('Save'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete, color: Colors.red),
+            title: const Text('Delete Announcement',
+                style: TextStyle(color: Colors.red)),
+            onTap: () {
+              Navigator.pop(context);
+              _deleteAnnouncement(announcement, index);
+            },
           ),
         ],
       ),
     );
-
-    if (result == true) {
-      try {
-        await _restaurantService.updateAnnouncement(
-          announcement.id,
-          {'title': title, 'message': message},
-        );
-        await _loadAnnouncements();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Announcement updated successfully')),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating announcement: $e')),
-          );
-        }
-      }
-    }
   }
 
-  Future<void> _deleteAnnouncement(int announcementId) async {
+  Future<void> _deleteAnnouncement(Announcement announcement, int index) async {
     try {
-      // Show confirmation dialog
       final confirmed = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Delete Announcement'),
           content:
-              const Text('Are you sure you want to delete this announcement?'),
+              Text('Are you sure you want to delete "${announcement.title}"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -788,33 +756,95 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text(
-                'Delete',
-                style: TextStyle(color: Colors.red),
-              ),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
             ),
           ],
         ),
       );
-
-      // If user confirmed deletion
       if (confirmed ?? false) {
-        await _restaurantService.deleteAnnouncement(announcementId);
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Announcement deleted successfully')),
-          );
-          // Refresh the data to update the UI
-          _loadData();
-        }
-      }
-    } catch (e) {
-      if (mounted) {
+        await _restaurantService.deleteAnnouncement(announcement.pk!);
+        setState(() {
+          _announcements.removeAt(index);
+        });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error deleting announcement: $e')),
+          const SnackBar(content: Text('Announcement deleted successfully')),
         );
       }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting announcement: $e')),
+      );
     }
+  }
+
+  void _showCreateAnnouncementDialog(Announcement? announcement) {
+    var titleController =
+        TextEditingController(text: announcement?.title ?? '');
+    var messageController =
+        TextEditingController(text: announcement?.message ?? '');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+            announcement != null ? 'Edit Announcement' : 'Create Announcement'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            TextField(
+              controller: messageController,
+              decoration: const InputDecoration(labelText: 'Message'),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final data = {
+                'title': titleController.text,
+                'message': messageController.text,
+              };
+              try {
+                if (announcement != null) {
+                  await _restaurantService.updateAnnouncement(
+                      announcement.pk!, data);
+                } else {
+                  await _restaurantService.createAnnouncement(
+                      widget.restaurantId, data);
+                }
+                if (mounted) {
+                  Navigator.pop(context);
+                  await _loadAnnouncements();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(
+                            '${announcement != null ? 'Updated' : 'Created'} announcement successfully')),
+                  );
+                }
+              } catch (e) {
+                print(
+                    'Error ${announcement != null ? 'updating' : 'creating'} announcement: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(
+                            'Error ${announcement != null ? 'updating' : 'creating'} announcement: $e')),
+                  );
+                }
+              }
+            },
+            child: Text(announcement != null ? 'Update' : 'Create'),
+          ),
+        ],
+      ),
+    );
   }
 }

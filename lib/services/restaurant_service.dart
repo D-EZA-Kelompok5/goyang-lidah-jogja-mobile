@@ -6,6 +6,7 @@ import 'package:goyang_lidah_jogja/models/announcement.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/restaurant.dart';
 import '../models/menu.dart';
+import '../models/announcement.dart';
 
 class RestaurantService {
   final CookieRequest request;
@@ -119,88 +120,57 @@ class RestaurantService {
     }
   }
 
-  Future<List<AnnouncementElement>> fetchAnnouncements(int restaurantId,
-      {String filter = 'newest'}) async {
+  // Announcement Operations
+  Future<List<Announcement>> fetchAnnouncements(int restaurantId) async {
     try {
-      String endpoint = '$baseUrl/$restaurantId/announcements/';
-
-      // Add filter parameter
-      endpoint += '?announcement_filter=$filter';
-
-      final response = await request.get(endpoint);
-
-      if (response != null &&
-          response['status'] == 'success' &&
-          response['announcements'] != null) {
-        List<dynamic> announcementsJson = response['announcements'];
-        return announcementsJson
-            .map((json) => AnnouncementElement.fromJson(json))
+      final response =
+          await request.get('$baseUrl/api/announcement/json/$restaurantId/');
+      if (response != null) {
+        // Handle the JSON structure as needed
+        // For example:
+        final List<dynamic> data = response;
+        return data
+            .map((item) => AnnouncementResponse.fromJson(item).fields)
             .toList();
       }
       return [];
     } catch (e) {
       print('Error fetching announcements: $e');
-      throw Exception('Failed to fetch announcements: $e');
+      rethrow;
     }
   }
 
-  Future<AnnouncementElement> createAnnouncement(
+  Future<bool> createAnnouncement(
       int restaurantId, Map<String, dynamic> data) async {
-    final jsonData =
-        jsonEncode({'title': data['title'], 'message': data['message']});
     try {
       final response = await request.post(
-        '$baseUrl/announcement/$restaurantId/create/',
-        jsonData,
-      );
-
-      print('Created announcement: $response');
-
-      if (response == null || !response.containsKey('announcement')) {
-        throw Exception('Invalid response format');
-      }
-
-      return AnnouncementElement.fromJson(response['announcement']);
+          '$baseUrl/api/announcement/$restaurantId/create/', jsonEncode(data));
+      return response != null;
     } catch (e) {
       print('Error creating announcement: $e');
-      throw Exception('Failed to create announcement: $e');
+      rethrow;
     }
   }
 
-  Future<AnnouncementElement> updateAnnouncement(
-      int announcementId, Map<String, dynamic> data) async {
-    final jsonData =
-        jsonEncode({'title': data['title'], 'message': data['message']});
+  Future<bool> updateAnnouncement(int pk, Map<String, dynamic> data) async {
     try {
       final response = await request.post(
-          '$baseUrl/announcement/$announcementId/edit/', jsonData);
-
-      print('Edited announcement: $response');
-
-      if (response == null || !response.containsKey('announcement')) {
-        throw Exception('Invalid response format');
-      }
-
-      return AnnouncementElement.fromJson(response['announcement']);
+          '$baseUrl/api/announcement/$pk/edit/', jsonEncode(data));
+      return response != null;
     } catch (e) {
       print('Error updating announcement: $e');
-      throw Exception('Failed to update announcement: $e');
+      rethrow;
     }
   }
 
-  Future<bool> deleteAnnouncement(int announcementId) async {
+  Future<bool> deleteAnnouncement(int pk) async {
     try {
-      final response =
-          await request.get('$baseUrl/announcement/$announcementId/delete/');
-
-      if (response == null) {
-        throw Exception('No response received');
-      }
-
-      return response['status'] == 'success';
+      final response = await request
+          .post('$baseUrl/api/announcement/$pk/delete/', {'_method': 'DELETE'});
+      return response != null;
     } catch (e) {
       print('Error deleting announcement: $e');
-      throw Exception('Failed to delete announcement: $e');
+      rethrow;
     }
   }
 }
