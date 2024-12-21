@@ -56,8 +56,6 @@ class Restaurant {
   });
 
   factory Restaurant.fromJson(Map<String, dynamic> json) {
-    // Add debug print
-    print('Processing JSON: $json');
     try {
       return Restaurant(
         id: json["id"],

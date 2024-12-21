@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 
+import 'package:goyang_lidah_jogja/models/announcement.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/restaurant.dart';
 import '../models/menu.dart';
@@ -52,8 +53,6 @@ class RestaurantService {
       final response = await request.get(endpoint);
       if (response != null && response['menus'] != null) {
         List<dynamic> menusJson = response['menus'];
-        print('Response: $response'); // Add debug print
-        print('Menus JSON: $menusJson');
         return menusJson.map((json) => MenuElement.fromJson(json)).toList();
       }
       return [];
@@ -92,8 +91,6 @@ class RestaurantService {
         throw Exception('No response received');
       }
 
-      print('Update response: $response');
-
       if (response['status'] == 'success') {
         return MenuElement.fromJson(response);
       } else {
@@ -119,6 +116,91 @@ class RestaurantService {
     } catch (e) {
       print('Error deleting menu: $e');
       throw Exception('Failed to delete menu: $e');
+    }
+  }
+
+  Future<List<AnnouncementElement>> fetchAnnouncements(int restaurantId,
+      {String filter = 'newest'}) async {
+    try {
+      String endpoint = '$baseUrl/$restaurantId/announcements/';
+
+      // Add filter parameter
+      endpoint += '?announcement_filter=$filter';
+
+      final response = await request.get(endpoint);
+
+      if (response != null &&
+          response['status'] == 'success' &&
+          response['announcements'] != null) {
+        List<dynamic> announcementsJson = response['announcements'];
+        return announcementsJson
+            .map((json) => AnnouncementElement.fromJson(json))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching announcements: $e');
+      throw Exception('Failed to fetch announcements: $e');
+    }
+  }
+
+  Future<AnnouncementElement> createAnnouncement(
+      int restaurantId, Map<String, dynamic> data) async {
+    final jsonData =
+        jsonEncode({'title': data['title'], 'message': data['message']});
+    try {
+      final response = await request.post(
+        '$baseUrl/announcement/$restaurantId/create/',
+        jsonData,
+      );
+
+      print('Created announcement: $response');
+
+      if (response == null || !response.containsKey('announcement')) {
+        throw Exception('Invalid response format');
+      }
+
+      return AnnouncementElement.fromJson(response['announcement']);
+    } catch (e) {
+      print('Error creating announcement: $e');
+      throw Exception('Failed to create announcement: $e');
+    }
+  }
+
+  Future<AnnouncementElement> updateAnnouncement(
+      int announcementId, Map<String, dynamic> data) async {
+    final jsonData =
+        jsonEncode({'title': data['title'], 'message': data['message']});
+    try {
+      final response = await request.post(
+          '$baseUrl/announcement/$announcementId/edit/', jsonData);
+
+      print('Edited announcement: $response');
+
+      if (response == null || !response.containsKey('announcement')) {
+        throw Exception('Invalid response format');
+      }
+
+      return AnnouncementElement.fromJson(response['announcement']);
+    } catch (e) {
+      print('Error updating announcement: $e');
+      throw Exception('Failed to update announcement: $e');
+    }
+  }
+
+  Future<bool> deleteAnnouncement(int announcementId) async {
+    try {
+      final response =
+          await request.get('$baseUrl/announcement/$announcementId/delete/');
+
+      if (response == null) {
+        throw Exception('No response received');
+      }
+
+      return response['status'] == 'success';
+    } catch (e) {
+      print('Error deleting announcement: $e');
+      throw Exception('Failed to delete announcement: $e');
     }
   }
 }

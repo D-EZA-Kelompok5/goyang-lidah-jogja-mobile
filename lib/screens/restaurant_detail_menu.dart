@@ -1,6 +1,7 @@
 // lib/screens/restaurant_detail_menu.dart
 
 import 'package:flutter/material.dart';
+import 'package:goyang_lidah_jogja/models/announcement.dart';
 import 'package:goyang_lidah_jogja/screens/menu_create_edit.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
@@ -25,9 +26,10 @@ class RestaurantDetailPage extends StatefulWidget {
 class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   late RestaurantService _restaurantService;
   String _menuFilter = 'all';
-  String _announcementFilter = 'all';
   Restaurant? _restaurant;
   List<MenuElement> _menus = [];
+  List<AnnouncementElement> _announcements = [];
+  String _announcementFilter = 'newest';
 
   @override
   void initState() {
@@ -120,6 +122,94 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     }
   }
 
+  Future<void> _loadAnnouncements() async {
+    try {
+      final announcements =
+          await _restaurantService.fetchAnnouncements(widget.restaurantId);
+      if (mounted) {
+        setState(() {
+          _announcements = announcements;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading announcements: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _createAnnouncement() async {
+    final formKey = GlobalKey<FormState>();
+    String title = '';
+    String message = '';
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create Announcement'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Title'),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Required' : null,
+                onSaved: (value) => title = value ?? '',
+              ),
+              TextFormField(
+                decoration: const InputDecoration(labelText: 'Message'),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Required' : null,
+                onSaved: (value) => message = value ?? '',
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                formKey.currentState?.save();
+                Navigator.pop(context, true);
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      try {
+        await _restaurantService.createAnnouncement(
+          widget.restaurantId,
+          {'title': title, 'message': message},
+        );
+        await _loadAnnouncements();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Announcement created successfully')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error creating announcement: $e')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -155,6 +245,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildRestaurantHeader(restaurant),
+                  _buildAnnouncementsSection(), // Show to all users
                   _buildMenuSection(restaurant),
                 ],
               ),
@@ -454,5 +545,276 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildAnnouncementsSection() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Announcements',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Row(
+                children: [
+                  // Filter dropdown
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade300),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: DropdownButton<String>(
+                      value: _announcementFilter,
+                      underline: Container(), // Remove the default underline
+                      icon: const Icon(Icons.sort),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _announcementFilter = newValue;
+                          });
+                        }
+                      },
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'newest',
+                          child: Text('Newest First'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'oldest',
+                          child: Text('Oldest First'),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Create button for owners
+                  if (widget.isOwner)
+                    ElevatedButton.icon(
+                      onPressed: _createAnnouncement,
+                      icon: const Icon(Icons.add, color: Colors.white),
+                      label: const Text('Create',
+                          style: TextStyle(color: Colors.white)),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          FutureBuilder<List<AnnouncementElement>>(
+            future: _restaurantService.fetchAnnouncements(
+              widget.restaurantId,
+              filter: _announcementFilter,
+            ),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+
+              if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              }
+
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: Text('No announcements yet'),
+                  ),
+                );
+              }
+
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  final announcement = snapshot.data![index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8),
+                    child: ListTile(
+                      title: Text(
+                        announcement.title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(announcement.message),
+                      ),
+                      // Only show edit/delete options for owners
+                      trailing: widget.isOwner
+                          ? PopupMenuButton<String>(
+                              icon: const Icon(Icons.more_vert),
+                              onSelected: (value) async {
+                                if (value == 'edit') {
+                                  await _editAnnouncement(announcement);
+                                } else if (value == 'delete') {
+                                  await _deleteAnnouncement(announcement.id);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                const PopupMenuItem(
+                                  value: 'edit',
+                                  child: ListTile(
+                                    leading: Icon(Icons.edit),
+                                    title: Text('Edit'),
+                                  ),
+                                ),
+                                const PopupMenuItem(
+                                  value: 'delete',
+                                  child: ListTile(
+                                    leading: Icon(
+                                      Icons.delete,
+                                      color: Colors.red,
+                                    ),
+                                    title: Text(
+                                      'Delete',
+                                      style: TextStyle(color: Colors.red),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : null,
+                    ),
+                  );
+                },
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _editAnnouncement(AnnouncementElement announcement) async {
+    final formKey = GlobalKey<FormState>();
+    String title = announcement.title;
+    String message = announcement.message;
+
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Announcement'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                initialValue: announcement.title,
+                decoration: const InputDecoration(labelText: 'Title'),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Required' : null,
+                onSaved: (value) => title = value ?? '',
+              ),
+              TextFormField(
+                initialValue: announcement.message,
+                decoration: const InputDecoration(labelText: 'Message'),
+                validator: (value) =>
+                    value?.isEmpty ?? true ? 'Required' : null,
+                onSaved: (value) => message = value ?? '',
+                maxLines: 3,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              if (formKey.currentState?.validate() ?? false) {
+                formKey.currentState?.save();
+                Navigator.pop(context, true);
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == true) {
+      try {
+        await _restaurantService.updateAnnouncement(
+          announcement.id,
+          {'title': title, 'message': message},
+        );
+        await _loadAnnouncements();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Announcement updated successfully')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error updating announcement: $e')),
+          );
+        }
+      }
+    }
+  }
+
+  Future<void> _deleteAnnouncement(int announcementId) async {
+    try {
+      // Show confirmation dialog
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Delete Announcement'),
+          content:
+              const Text('Are you sure you want to delete this announcement?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text(
+                'Delete',
+                style: TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        ),
+      );
+
+      // If user confirmed deletion
+      if (confirmed ?? false) {
+        await _restaurantService.deleteAnnouncement(announcementId);
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Announcement deleted successfully')),
+          );
+          // Refresh the data to update the UI
+          _loadData();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting announcement: $e')),
+        );
+      }
+    }
   }
 }
