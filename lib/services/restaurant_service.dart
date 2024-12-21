@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 
+import 'package:goyang_lidah_jogja/models/announcement.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/restaurant.dart';
 import '../models/menu.dart';
@@ -53,8 +54,6 @@ class RestaurantService {
       final response = await request.get(endpoint);
       if (response != null && response['menus'] != null) {
         List<dynamic> menusJson = response['menus'];
-        print('Response: $response'); // Add debug print
-        print('Menus JSON: $menusJson');
         return menusJson.map((json) => MenuElement.fromJson(json)).toList();
       }
       return [];
@@ -93,8 +92,6 @@ class RestaurantService {
         throw Exception('No response received');
       }
 
-      print('Update response: $response');
-
       if (response['status'] == 'success') {
         return MenuElement.fromJson(response);
       } else {
@@ -126,7 +123,8 @@ class RestaurantService {
   // Announcement Operations
   Future<List<Announcement>> fetchAnnouncements(int restaurantId) async {
     try {
-      final response = await request.get('$baseUrl/api/announcement/json/$restaurantId/');
+      final response =
+          await request.get('$baseUrl/api/announcement/json/$restaurantId/');
       if (response != null) {
         // Handle the JSON structure as needed
         // For example:
@@ -142,10 +140,11 @@ class RestaurantService {
     }
   }
 
-  Future<bool> createAnnouncement(int restaurantId, Map<String, dynamic> data) async {
+  Future<bool> createAnnouncement(
+      int restaurantId, Map<String, dynamic> data) async {
     try {
-      final response = await request.post('$baseUrl/api/announcement/$restaurantId/create/',
-      jsonEncode(data));
+      final response = await request.post(
+          '$baseUrl/api/announcement/$restaurantId/create/', jsonEncode(data));
       return response != null;
     } catch (e) {
       print('Error creating announcement: $e');
@@ -155,8 +154,8 @@ class RestaurantService {
 
   Future<bool> updateAnnouncement(int pk, Map<String, dynamic> data) async {
     try {
-      final response = await request.post('$baseUrl/api/announcement/$pk/edit/',
-      jsonEncode(data));
+      final response = await request.post(
+          '$baseUrl/api/announcement/$pk/edit/', jsonEncode(data));
       return response != null;
     } catch (e) {
       print('Error updating announcement: $e');
@@ -166,7 +165,8 @@ class RestaurantService {
 
   Future<bool> deleteAnnouncement(int pk) async {
     try {
-      final response = await request.post('$baseUrl/api/announcement/$pk/delete/', {'_method': 'DELETE'});
+      final response = await request
+          .post('$baseUrl/api/announcement/$pk/delete/', {'_method': 'DELETE'});
       return response != null;
     } catch (e) {
       print('Error deleting announcement: $e');

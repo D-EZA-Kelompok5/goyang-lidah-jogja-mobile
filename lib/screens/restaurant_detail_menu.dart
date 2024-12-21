@@ -1,13 +1,13 @@
 // lib/screens/restaurant_detail_menu.dart
 
 import 'package:flutter/material.dart';
+import 'package:goyang_lidah_jogja/models/announcement.dart';
 import 'package:goyang_lidah_jogja/screens/menu_create_edit.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../models/restaurant.dart';
 import '../models/menu.dart';
 import '../services/restaurant_service.dart';
-import '../models/announcement.dart';
 
 class RestaurantDetailPage extends StatefulWidget {
   final int restaurantId;
@@ -64,7 +64,8 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
 
   Future<void> _loadAnnouncements() async {
     try {
-      final announcements = await _restaurantService.fetchAnnouncements(widget.restaurantId);
+      final announcements =
+          await _restaurantService.fetchAnnouncements(widget.restaurantId);
       if (mounted) {
         setState(() {
           _announcements = announcements;
@@ -312,7 +313,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.75,
+                  childAspectRatio: 0.8,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
@@ -334,8 +335,10 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     Widget menuContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        AspectRatio(
-          aspectRatio: 1,
+        // Wrap the image in a Container with fixed height instead of AspectRatio
+        Container(
+          height: 160, // Fixed height for image container
+          width: double.infinity,
           child: menu.image != null
               ? Image.network(
                   menu.image!,
@@ -353,57 +356,198 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 )
               : _buildPlaceholderImage(),
         ),
-        Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                menu.name,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+        // Wrap content in Expanded to allow flexible sizing
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min, // Use minimum space needed
+              children: [
+                Text(
+                  menu.name,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                menu.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
+                const SizedBox(height: 4),
+                Expanded(
+                  child: Text(
+                    menu.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Rp ${menu.price.toString()}',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Theme.of(context).primaryColor,
-                  fontWeight: FontWeight.bold,
+                const SizedBox(height: 4),
+                Text(
+                  'Rp ${menu.price.toString()}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Theme.of(context).primaryColor,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ],
     );
 
     return Card(
-      clipBehavior: Clip.antiAlias,
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: widget.isOwner
-          ? InkWell(
-              onTap: () => _showMenuOptions(menu),
-              child: menuContent,
-            )
-          : menuContent, // No InkWell for non-owners
+        clipBehavior: Clip.antiAlias,
+        elevation: 4,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: InkWell(
+          onTap: () => _showMenuDetail(menu),
+          child: menuContent,
+        ));
+  }
+
+  // Add this new method to show the detailed popup
+  void _showMenuDetail(MenuElement menu) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Menu Image
+                if (menu.image != null)
+                  Container(
+                    height: 200,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(menu.image!),
+                        fit: BoxFit.cover,
+                      ),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                    ),
+                  )
+                else
+                  Container(
+                    height: 200,
+                    color: Colors.grey[200],
+                    child: const Icon(
+                      Icons.restaurant,
+                      size: 64,
+                      color: Colors.grey,
+                    ),
+                  ),
+
+                // Menu Details
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              menu.name,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Rp ${menu.price.toString()}',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).primaryColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        menu.description,
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[700],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+
+                      // Action Buttons - Only visible to owners
+                      if (widget.isOwner) ...[
+                        const Divider(),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _navigateToMenuForm(menu: menu);
+                              },
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.edit),
+                                  SizedBox(width: 8),
+                                  Text('Edit'),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _deleteMenu(menu);
+                              },
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: const [
+                                  Icon(Icons.delete),
+                                  SizedBox(width: 8),
+                                  Text('Delete'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+
+                      // Close button for non-owners
+                      if (!widget.isOwner)
+                        Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('Close'),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -551,14 +695,13 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                     title: Text(announcement.title),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(announcement.message)
-                      ],
+                      children: [Text(announcement.message)],
                     ),
                     trailing: widget.isOwner
                         ? IconButton(
                             icon: const Icon(Icons.more_vert),
-                            onPressed: () => _showAnnouncementOptions(announcement, index),
+                            onPressed: () =>
+                                _showAnnouncementOptions(announcement, index),
                           )
                         : null,
                   ),
@@ -586,7 +729,8 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
           ),
           ListTile(
             leading: const Icon(Icons.delete, color: Colors.red),
-            title: const Text('Delete Announcement', style: TextStyle(color: Colors.red)),
+            title: const Text('Delete Announcement',
+                style: TextStyle(color: Colors.red)),
             onTap: () {
               Navigator.pop(context);
               _deleteAnnouncement(announcement, index);
@@ -603,7 +747,8 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Delete Announcement'),
-          content: Text('Are you sure you want to delete "${announcement.title}"?'),
+          content:
+              Text('Are you sure you want to delete "${announcement.title}"?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -633,12 +778,15 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   }
 
   void _showCreateAnnouncementDialog(Announcement? announcement) {
-    var titleController = TextEditingController(text: announcement?.title ?? '');
-    var messageController = TextEditingController(text: announcement?.message ?? '');
+    var titleController =
+        TextEditingController(text: announcement?.title ?? '');
+    var messageController =
+        TextEditingController(text: announcement?.message ?? '');
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(announcement != null ? 'Edit Announcement' : 'Create Announcement'),
+        title: Text(
+            announcement != null ? 'Edit Announcement' : 'Create Announcement'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -666,22 +814,29 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
               };
               try {
                 if (announcement != null) {
-                  await _restaurantService.updateAnnouncement(announcement.pk!, data);
+                  await _restaurantService.updateAnnouncement(
+                      announcement.pk!, data);
                 } else {
-                  await _restaurantService.createAnnouncement(widget.restaurantId, data);
+                  await _restaurantService.createAnnouncement(
+                      widget.restaurantId, data);
                 }
                 if (mounted) {
                   Navigator.pop(context);
                   await _loadAnnouncements();
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('${announcement != null ? 'Updated' : 'Created'} announcement successfully')),
+                    SnackBar(
+                        content: Text(
+                            '${announcement != null ? 'Updated' : 'Created'} announcement successfully')),
                   );
                 }
               } catch (e) {
-                print('Error ${announcement != null ? 'updating' : 'creating'} announcement: $e');
+                print(
+                    'Error ${announcement != null ? 'updating' : 'creating'} announcement: $e');
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error ${announcement != null ? 'updating' : 'creating'} announcement: $e')),
+                    SnackBar(
+                        content: Text(
+                            'Error ${announcement != null ? 'updating' : 'creating'} announcement: $e')),
                   );
                 }
               }
@@ -692,5 +847,4 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ),
     );
   }
-
 }
