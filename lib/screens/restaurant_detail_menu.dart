@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import '../models/restaurant.dart';
 import '../models/menu.dart';
 import '../services/restaurant_service.dart';
+import '../models/announcement.dart';
 
 class RestaurantDetailPage extends StatefulWidget {
   final int restaurantId;
@@ -28,6 +29,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   String _announcementFilter = 'all';
   Restaurant? _restaurant;
   List<MenuElement> _menus = [];
+  List<Announcement> _announcements = [];
 
   @override
   void initState() {
@@ -35,6 +37,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     final request = context.read<CookieRequest>();
     _restaurantService = RestaurantService(request);
     _loadData();
+    _loadAnnouncements();
   }
 
   Future<void> _loadData() async {
@@ -54,6 +57,23 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error loading data: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _loadAnnouncements() async {
+    try {
+      final announcements = await _restaurantService.fetchAnnouncements(widget.restaurantId);
+      if (mounted) {
+        setState(() {
+          _announcements = announcements;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading announcements: $e')),
         );
       }
     }
@@ -155,6 +175,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildRestaurantHeader(restaurant),
+                  _buildAnnouncementSection(),
                   _buildMenuSection(restaurant),
                 ],
               ),
@@ -455,4 +476,221 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ),
     );
   }
+
+  List<Announcement> _getSortedAnnouncements() {
+    List<Announcement> sorted = List.from(_announcements);
+    switch (_announcementFilter) {
+      case 'newest':
+        sorted.sort((a, b) => (b.pk ?? 0).compareTo(a.pk ?? 0));
+        break;
+      case 'oldest':
+        sorted.sort((a, b) => (a.pk ?? 0).compareTo(b.pk ?? 0));
+        break;
+      default:
+        // 'all'
+        break;
+    }
+    return sorted;
+  }
+
+  Widget _buildAnnouncementFilterDropdown() {
+    return DropdownButton<String>(
+      value: _announcementFilter,
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _announcementFilter = newValue;
+          });
+        }
+      },
+      items: const [
+        DropdownMenuItem(value: 'all', child: Text('All Announcements')),
+        DropdownMenuItem(value: 'newest', child: Text('Newest First')),
+        DropdownMenuItem(value: 'oldest', child: Text('Oldest First')),
+      ],
+    );
+  }
+
+  Widget _buildAnnouncementSection() {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Announcements',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              Row(
+                children: [
+                  _buildAnnouncementFilterDropdown(),
+                  if (widget.isOwner)
+                    IconButton(
+                      icon: const Icon(Icons.add),
+                      onPressed: () => _showCreateAnnouncementDialog(null),
+                    ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (_announcements.isEmpty)
+            const Text('No announcements available.')
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _getSortedAnnouncements().length,
+              itemBuilder: (context, index) {
+                final announcement = _getSortedAnnouncements()[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(announcement.title),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(announcement.message)
+                      ],
+                    ),
+                    trailing: widget.isOwner
+                        ? IconButton(
+                            icon: const Icon(Icons.more_vert),
+                            onPressed: () => _showAnnouncementOptions(announcement, index),
+                          )
+                        : null,
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _showAnnouncementOptions(Announcement announcement, int index) {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Edit Announcement'),
+            onTap: () {
+              Navigator.pop(context);
+              _showCreateAnnouncementDialog(announcement);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete, color: Colors.red),
+            title: const Text('Delete Announcement', style: TextStyle(color: Colors.red)),
+            onTap: () {
+              Navigator.pop(context);
+              _deleteAnnouncement(announcement, index);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteAnnouncement(Announcement announcement, int index) async {
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Delete Announcement'),
+          content: Text('Are you sure you want to delete "${announcement.title}"?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            ),
+          ],
+        ),
+      );
+      if (confirmed ?? false) {
+        await _restaurantService.deleteAnnouncement(announcement.pk!);
+        setState(() {
+          _announcements.removeAt(index);
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Announcement deleted successfully')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting announcement: $e')),
+      );
+    }
+  }
+
+  void _showCreateAnnouncementDialog(Announcement? announcement) {
+    var titleController = TextEditingController(text: announcement?.title ?? '');
+    var messageController = TextEditingController(text: announcement?.message ?? '');
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(announcement != null ? 'Edit Announcement' : 'Create Announcement'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            TextField(
+              controller: messageController,
+              decoration: const InputDecoration(labelText: 'Message'),
+              maxLines: 3,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final data = {
+                'title': titleController.text,
+                'message': messageController.text,
+              };
+              try {
+                if (announcement != null) {
+                  await _restaurantService.updateAnnouncement(announcement.pk!, data);
+                } else {
+                  await _restaurantService.createAnnouncement(widget.restaurantId, data);
+                }
+                if (mounted) {
+                  Navigator.pop(context);
+                  await _loadAnnouncements();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('${announcement != null ? 'Updated' : 'Created'} announcement successfully')),
+                  );
+                }
+              } catch (e) {
+                print('Error ${announcement != null ? 'updating' : 'creating'} announcement: $e');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error ${announcement != null ? 'updating' : 'creating'} announcement: $e')),
+                  );
+                }
+              }
+            },
+            child: Text(announcement != null ? 'Update' : 'Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
 }
