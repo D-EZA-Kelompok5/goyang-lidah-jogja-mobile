@@ -119,7 +119,7 @@ class RestaurantCard extends StatelessWidget {
             MaterialPageRoute(
               builder: (context) => RestaurantDetailPage(
                 restaurantId: restaurant.id,
-                // isOwner: true,
+                isOwner: true,
               ),
             ),
           );
