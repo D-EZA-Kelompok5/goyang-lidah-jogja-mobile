@@ -5,6 +5,7 @@ import 'dart:convert';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/restaurant.dart';
 import '../models/menu.dart';
+import '../models/announcement.dart';
 
 class RestaurantService {
   final CookieRequest request;
@@ -119,6 +120,57 @@ class RestaurantService {
     } catch (e) {
       print('Error deleting menu: $e');
       throw Exception('Failed to delete menu: $e');
+    }
+  }
+
+  // Announcement Operations
+  Future<List<Announcement>> fetchAnnouncements(int restaurantId) async {
+    try {
+      final response = await request.get('$baseUrl/api/announcement/json/$restaurantId/');
+      if (response != null) {
+        // Handle the JSON structure as needed
+        // For example:
+        final List<dynamic> data = response;
+        return data
+            .map((item) => AnnouncementResponse.fromJson(item).fields)
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      print('Error fetching announcements: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> createAnnouncement(int restaurantId, Map<String, dynamic> data) async {
+    try {
+      final response = await request.post('$baseUrl/api/announcement/$restaurantId/create/',
+      jsonEncode(data));
+      return response != null;
+    } catch (e) {
+      print('Error creating announcement: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> updateAnnouncement(int pk, Map<String, dynamic> data) async {
+    try {
+      final response = await request.post('$baseUrl/api/announcement/$pk/edit/',
+      jsonEncode(data));
+      return response != null;
+    } catch (e) {
+      print('Error updating announcement: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> deleteAnnouncement(int pk) async {
+    try {
+      final response = await request.post('$baseUrl/api/announcement/$pk/delete/', {'_method': 'DELETE'});
+      return response != null;
+    } catch (e) {
+      print('Error deleting announcement: $e');
+      rethrow;
     }
   }
 }

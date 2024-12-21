@@ -1,54 +1,59 @@
 // To parse this JSON data, do
 //
-//     final announcement = announcementFromJson(jsonString);
+//     final welcome = welcomeFromJson(jsonString);
 
 import 'dart:convert';
-import 'restaurant.dart';
 
-Announcement announcementFromJson(String str) => Announcement.fromJson(json.decode(str));
+List<AnnouncementResponse> welcomeFromJson(String str) => List<AnnouncementResponse>.from(json.decode(str).map((x) => AnnouncementResponse.fromJson(x)));
 
-String announcementToJson(Announcement data) => json.encode(data.toJson());
+String welcomeToJson(List<AnnouncementResponse> data) => json.encode(List<dynamic>.from(data.map((x) => x.toJson())));
 
-class Announcement {
-    List<AnnouncementElement> announcements;
+class AnnouncementResponse {
+    String model;
+    int pk;
+    Announcement fields;
 
-    Announcement({
-        required this.announcements,
+    AnnouncementResponse({
+        required this.model,
+        required this.pk,
+        required this.fields,
     });
 
-    factory Announcement.fromJson(Map<String, dynamic> json) => Announcement(
-        announcements: List<AnnouncementElement>.from(json["announcements"].map((x) => AnnouncementElement.fromJson(x))),
+    factory AnnouncementResponse.fromJson(Map<String, dynamic> json) => AnnouncementResponse(
+        model: json["model"],
+        pk: json["pk"],
+        fields: Announcement.fromJson(json["fields"])..pk = json["pk"],
     );
 
     Map<String, dynamic> toJson() => {
-        "announcements": List<dynamic>.from(announcements.map((x) => x.toJson())),
+        "model": model,
+        "pk": pk,
+        "fields": fields.toJson(),
     };
 }
 
-class AnnouncementElement {
-    int id;
+class Announcement {
+    int? pk;
+    int restaurant;
     String title;
     String message;
-    Restaurant restaurant;
 
-    AnnouncementElement({
-        required this.id,
+    Announcement({
+        this.pk,
+        required this.restaurant,
         required this.title,
         required this.message,
-        required this.restaurant,
     });
 
-    factory AnnouncementElement.fromJson(Map<String, dynamic> json) => AnnouncementElement(
-        id: json["id"],
+    factory Announcement.fromJson(Map<String, dynamic> json) => Announcement(
+        restaurant: json["restaurant"],
         title: json["title"],
         message: json["message"],
-        restaurant: Restaurant.fromJson(json["restaurant"]),
     );
 
     Map<String, dynamic> toJson() => {
-        "id": id,
+        "restaurant": restaurant,
         "title": title,
         "message": message,
-        "restaurant": restaurant.toJson(),
     };
 }

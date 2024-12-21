@@ -34,6 +34,61 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage> {
     }
   }
 
+  void _showCreateAnnouncementDialog(int restaurantId) {
+    final _titleController = TextEditingController();
+    final _messageController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Create Announcement'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _titleController,
+              decoration: const InputDecoration(labelText: 'Title'),
+            ),
+            TextField(
+              controller: _messageController,
+              decoration: const InputDecoration(labelText: 'Message'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () async {
+              final data = {
+                'title': _titleController.text,
+                'message': _messageController.text,
+              };
+              final service = context.read<RestaurantService>();
+              try {
+                final success = await service.createAnnouncement(restaurantId, data);
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Announcement created')),
+                  );
+                }
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: $e')),
+                );
+              } finally {
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Create'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final request = context.watch<CookieRequest>();
@@ -86,7 +141,10 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage> {
               itemCount: snapshot.data!.length,
               itemBuilder: (context, index) {
                 final restaurant = snapshot.data![index];
-                return RestaurantCard(restaurant: restaurant);
+                return RestaurantCard(
+                  restaurant: restaurant,
+                  onCreateAnnouncement: () => _showCreateAnnouncementDialog(restaurant.id),
+                );
               },
             ),
           );
@@ -98,10 +156,12 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage> {
 
 class RestaurantCard extends StatelessWidget {
   final Restaurant restaurant;
+  final VoidCallback? onCreateAnnouncement;
 
   const RestaurantCard({
     Key? key,
     required this.restaurant,
+    this.onCreateAnnouncement,
   }) : super(key: key);
 
   @override
@@ -196,6 +256,11 @@ class RestaurantCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (onCreateAnnouncement != null)
+                    IconButton(
+                      icon: const Icon(Icons.add_comment),
+                      onPressed: onCreateAnnouncement,
+                    ),
                 ],
               ),
             ),
