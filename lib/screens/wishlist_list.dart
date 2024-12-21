@@ -1,5 +1,3 @@
-// lib/screens/wishlist_list.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
@@ -8,7 +6,9 @@ import '../services/wishlist_service.dart';
 import 'wishlist_edit.dart';
 
 class WishlistList extends StatefulWidget {
-  const WishlistList({Key? key}) : super(key: key);
+  final VoidCallback onWishlistChanged;
+
+  const WishlistList({Key? key, required this.onWishlistChanged}) : super(key: key);
 
   @override
   _WishlistListState createState() => _WishlistListState();
@@ -113,7 +113,7 @@ class _WishlistListState extends State<WishlistList> {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             ElevatedButton(
-                              onPressed: () {
+                              onPressed: () async {
                                 // Aksi Edit
                                 final request = Provider.of<CookieRequest>(context, listen: false);
                                 Navigator.push(
@@ -157,24 +157,19 @@ class _WishlistListState extends State<WishlistList> {
                                       );
                                     },
                                   );
-                                  
-                                  // Jika pengguna tidak mengonfirmasi, keluar dari aksi
                                   if (confirm != true) return;
-
-                                  // Panggil service untuk menghapus wishlist
                                   await wishlistService.deleteWishlist(item.id, request);
+                                  widget.onWishlistChanged();
 
-                                  // Tampilkan snackbar sukses
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text("${item.menu.name} deleted successfully.")),
                                   );
 
-                                  // Perbarui daftar wishlist setelah penghapusan
+                                  //perbarui setelah delete
                                   setState(() {
                                     futureWishlists = wishlistService.fetchWishlists(request);
                                   });
                                 } catch (error) {
-                                  // Tangani error dan tampilkan pesan
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Failed to delete: $error')),
                                   );

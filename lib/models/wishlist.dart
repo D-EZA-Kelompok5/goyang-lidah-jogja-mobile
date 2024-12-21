@@ -1,5 +1,3 @@
-// lib/models/wishlist.dart
-
 import 'dart:convert';
 
 Wishlist productFromJson(String str) => Wishlist.fromJson(json.decode(str));

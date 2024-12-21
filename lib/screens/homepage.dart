@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/wishlist.dart';
 import 'package:provider/provider.dart';
-import 'package:goyang_lidah_jogja/screens/menu_detail.dart'; // Import MenuDetail page
-import 'package:goyang_lidah_jogja/widgets/left_drawer.dart'; // Import LeftDrawer
+import 'package:goyang_lidah_jogja/screens/menu_detail.dart'; 
+import 'package:goyang_lidah_jogja/widgets/left_drawer.dart'; 
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
-import '../services/api_service.dart'; // Import fetchMenus() dan model Menu
+import '../services/api_service.dart'; 
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:goyang_lidah_jogja/models/menu.dart';
-import '../services/wishlist_service.dart'; // Service untuk add to wishlist
+import '../services/wishlist_service.dart'; 
 
 class MyHomePage extends StatefulWidget {
   final UserProfile? userProfile;
@@ -20,14 +20,14 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  TextEditingController _searchController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
 
   UserProfile? userProfile;
   bool isLoading = true;
 
   List<MenuElement> menus = []; // Menyimpan data menu dari API
   bool isLoadingMenus = true; // Status loading untuk menu
-  Map<int, int> wishlistIds = {}; // key: menuId, value: wishlistId
+  Map<int, int> wishlistIds = {};
 
   late CookieRequest request; // Menyimpan request untuk auth
   late WishlistService wishlistService;
@@ -41,7 +41,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> _initializeUserProfile() async {
     request = Provider.of<CookieRequest>(context, listen: false);
-    wishlistService = WishlistService(request); // Initialize WishlistService
+    wishlistService = WishlistService(request); 
 
     if (request.loggedIn) {
       AuthService authService = AuthService(request);
@@ -75,7 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
       setState(() {
         isLoadingMenus = false;
       });
-      print('Error fetching menus: $e');
+      //print('Error fetching menus: $e');
     }
   }
 
@@ -88,56 +88,61 @@ class _MyHomePageState extends State<MyHomePage> {
       image: menuElement.image ?? '',
       restaurantName: menuElement.restaurant.name,
     );
-}
-Future<void> _toggleWishlist(MenuElement menu) async {
-  try {
-    //final menuItem = menuElementToMenuItem(menu); // Konversi MenuElement ke MenuItem
+  }
 
-    if (wishlistIds.containsKey(menu.id)) {
-      // Jika sudah ada di wishlist, hapus
-      final wishlistId = wishlistIds[menu.id]!;
-      await wishlistService.deleteWishlist(wishlistId, request);
-      
-      setState(() {
-        wishlistIds.remove(menu.id);
-      });
+  Future<void> _toggleWishlist(MenuElement menu) async {
+    try {
+      //final menuItem = menuElementToMenuItem(menu); 
 
+      if (wishlistIds.containsKey(menu.id)) {
+        // Jika sudah ada di wishlist, hapus
+        final wishlistId = wishlistIds[menu.id]!;
+        await wishlistService.deleteWishlist(wishlistId, request);
+        
+        setState(() {
+          wishlistIds.remove(menu.id);
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${menu.name} removed from wishlist.')),
+        );
+      } else {
+        // Jika belum ada, tambah
+        final wishlistId = await wishlistService.createWishlist(WishlistElement(
+          id: 0,
+          menu: menuElementToMenuItem(menu), 
+          catatan: '',
+          status: 'BELUM',
+        ));
+        setState(() {
+          wishlistIds[menu.id] = wishlistId;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${menu.name} added to wishlist.')),
+        );
+      }
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${menu.name} removed from wishlist.')),
-      );
-    } else {
-      // Jika belum ada, tambahkan
-      final wishlistId = await wishlistService.createWishlist(WishlistElement(
-        id: 0,
-        menu: menuElementToMenuItem(menu), // Gunakan hasil konversi
-        catatan: '',
-        status: 'BELUM',
-      ));
-      setState(() {
-        wishlistIds[menu.id] = wishlistId;
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('${menu.name} added to wishlist.')),
+        SnackBar(content: Text('Error: $e')),
       );
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
   }
-}
+
+  void refreshWishlist() {
+  _initializeUserProfile();
+  }
 
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return Scaffold(
+      return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
+        title: const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
@@ -156,7 +161,7 @@ Future<void> _toggleWishlist(MenuElement menu) async {
         backgroundColor: Colors.white,
         elevation: 2.0, // Bayangan ringan untuk tampilan mobile
       ),
-      drawer: LeftDrawer(), // Pass UserProfile ke LeftDrawer
+      drawer: LeftDrawer(onWishlistChanged: refreshWishlist), // Pass UserProfile ke LeftDrawer
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,13 +181,13 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                             radius: 30,
                             child: Icon(Icons.person, size: 30),
                           ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           userProfile!.username,
-                          style: TextStyle(
+                          style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Text(
@@ -195,19 +200,19 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                   ],
                 ),
               ),
-            if (userProfile != null) SizedBox(height: 20),
+            if (userProfile != null) const SizedBox(height: 20),
 
             Center(
               child: Text(
                 'Mau makan apa?',
                 style: TextStyle(
-                  fontSize: 24, // Sedikit lebih kecil untuk tampilan mobile
+                  fontSize: 24, 
                   fontWeight: FontWeight.bold,
                   color: Colors.green[700],
                 ),
               ),
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
 
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -216,15 +221,15 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                 decoration: InputDecoration(
                   hintText: 'Cari menu...',
                   hintStyle: TextStyle(color: Colors.grey.shade600),
-                  prefixIcon: Icon(Icons.search, color: Colors.green),
+                  prefixIcon: const Icon(Icons.search, color: Colors.green),
                   filled: true,
                   fillColor: Colors.white,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
-                    borderSide: BorderSide(color: Colors.grey),
+                    borderSide: const BorderSide(color: Colors.grey),
                   ),
                   contentPadding:
-                      EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+                      const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 ),
               ),
             ),
@@ -232,7 +237,7 @@ Future<void> _toggleWishlist(MenuElement menu) async {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: GridView.builder(
-                physics: NeverScrollableScrollPhysics(),
+                physics: const NeverScrollableScrollPhysics(),
                 shrinkWrap: true,
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: MediaQuery.of(context).size.width > 600 ? 3 : 2,
@@ -256,8 +261,8 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                             height: 120,
                             color: Colors.grey[200],
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
+                          const Padding(
+                            padding: EdgeInsets.all(8.0),
                             child: Text(
                               'Loading...',
                               style: TextStyle(
@@ -277,7 +282,13 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MenuDetailPage(menu: menu),
+                          builder: (context) => MenuDetailPage(
+                            menu: menu,
+                            wishlistService: wishlistService,
+                            wishlistIds: wishlistIds,
+                            refreshWishlist: refreshWishlist,
+                            userProfile: userProfile,
+                          ),
                         ),
                       );
                     },
@@ -292,7 +303,7 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                           Stack(
                             children: [
                               ClipRRect(
-                                borderRadius: BorderRadius.vertical(
+                                borderRadius: const BorderRadius.vertical(
                                     top: Radius.circular(15)),
                                 child: Image.network(
                                   menu.image ?? '',
@@ -303,7 +314,7 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                                       Container(
                                     height: 120,
                                     color: Colors.grey[200],
-                                    child: Icon(Icons.broken_image,
+                                    child: const Icon(Icons.broken_image,
                                         size: 50, color: Colors.grey),
                                   ),
                                 ),
@@ -314,7 +325,7 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                             padding: const EdgeInsets.all(8.0),
                             child: Text(
                               menu.name,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 16, fontWeight: FontWeight.bold),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -331,6 +342,8 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                               style: TextStyle(
                                   color: Colors.grey[600], fontSize: 14),
                             ),
+                            //kalau belum login, navigator push ke login page
+                            if (userProfile?.role == Role.CUSTOMER)
                             GestureDetector(
                               onTap: () => _toggleWishlist(menu),
                               child: Icon(
