@@ -25,7 +25,6 @@ class RestaurantService {
       }
       return [];
     } catch (e) {
-      print('Error fetching restaurants: $e');
       throw Exception('Failed to fetch restaurants: $e');
     }
   }
@@ -38,7 +37,6 @@ class RestaurantService {
       }
       return null;
     } catch (e) {
-      print('Error fetching restaurant detail: $e');
       throw Exception('Failed to fetch restaurant detail: $e');
     }
   }
@@ -58,7 +56,6 @@ class RestaurantService {
       }
       return [];
     } catch (e) {
-      print('Error fetching menus: $e');
       throw Exception('Failed to fetch menus: $e');
     }
   }
@@ -72,7 +69,6 @@ class RestaurantService {
       );
       return MenuElement.fromJson(response);
     } catch (e) {
-      print('Error creating menu: $e');
       throw Exception('Failed to create menu: $e');
     }
   }
@@ -98,7 +94,6 @@ class RestaurantService {
         throw Exception(response['message'] ?? 'Failed to update menu');
       }
     } catch (e) {
-      print('Error updating menu: $e');
       rethrow;
     }
   }
@@ -115,7 +110,6 @@ class RestaurantService {
       }
       return false;
     } catch (e) {
-      print('Error deleting menu: $e');
       throw Exception('Failed to delete menu: $e');
     }
   }
@@ -135,7 +129,6 @@ class RestaurantService {
       }
       return [];
     } catch (e) {
-      print('Error fetching announcements: $e');
       rethrow;
     }
   }
@@ -147,7 +140,6 @@ class RestaurantService {
           '$baseUrl/api/announcement/$restaurantId/create/', jsonEncode(data));
       return response != null;
     } catch (e) {
-      print('Error creating announcement: $e');
       rethrow;
     }
   }
@@ -158,7 +150,6 @@ class RestaurantService {
           '$baseUrl/api/announcement/$pk/edit/', jsonEncode(data));
       return response != null;
     } catch (e) {
-      print('Error updating announcement: $e');
       rethrow;
     }
   }
@@ -169,7 +160,6 @@ class RestaurantService {
           .post('$baseUrl/api/announcement/$pk/delete/', {'_method': 'DELETE'});
       return response != null;
     } catch (e) {
-      print('Error deleting announcement: $e');
       rethrow;
     }
   }
