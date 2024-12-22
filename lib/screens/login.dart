@@ -85,7 +85,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       // Autentikasi menggunakan pbp_django_auth
                       final response = await request.login(
-                          "http://127.0.0.1:8000/auth/login/", {
+                          "https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/auth/login/", {
                         'username': username,
                         'password': password,
                       });

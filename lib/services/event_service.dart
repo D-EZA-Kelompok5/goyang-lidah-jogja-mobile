@@ -11,7 +11,7 @@ class EventService {
 
   Future<List<Event>> fetchEvents() async {
     final response = await request.get(
-      'http://127.0.0.1:8000/event_manager/events_json/',
+      'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/event_manager/events_json/',
     );
 
     if (response != null && response is Map<String, dynamic>) {
@@ -28,7 +28,7 @@ class EventService {
 
   Future<void> createEvent(Event event) async {
     final response = await request.postJson(
-      'http://127.0.0.1:8000/event_manager/create-event-flutter/',
+      'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/event_manager/create-event-flutter/',
       jsonEncode(event.toJson()),
     );
 
@@ -43,7 +43,7 @@ class EventService {
 
   Future<void> updateEvent(Event event) async {
     final response = await request.postJson(
-      'http://127.0.0.1:8000/event_manager/update-event-flutter/${event.id}/',
+      'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/event_manager/update-event-flutter/${event.id}/',
       jsonEncode(event.toJson()),
     );
 
@@ -57,7 +57,7 @@ class EventService {
   }
 
   Future<void> deleteEvent(int eventId) async {
-    final url = 'http://127.0.0.1:8000/event_manager/delete-event-flutter/$eventId/';
+    final url = 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/event_manager/delete-event-flutter/$eventId/';
 
     // Prepare data to mimic DELETE action via POST
     final data = {

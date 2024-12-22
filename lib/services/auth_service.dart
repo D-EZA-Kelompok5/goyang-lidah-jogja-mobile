@@ -9,7 +9,7 @@ class AuthService {
   AuthService(this.request);
 
   Future<UserProfile?> getUserProfile() async {
-    final response = await request.get("http://127.0.0.1:8000/auth/profile/");
+    final response = await request.get("https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/auth/profile/");
     if (response != null && response['user_id'] != null) {
       return UserProfile.fromJson(response);
     } else {
