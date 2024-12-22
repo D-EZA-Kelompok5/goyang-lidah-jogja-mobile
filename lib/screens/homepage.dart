@@ -15,6 +15,7 @@ import 'package:goyang_lidah_jogja/models/menu.dart';
 import '../services/wishlist_service.dart';
 
 class MyHomePage extends StatefulWidget {
+  
   final UserProfile? userProfile;
 
   const MyHomePage({super.key, this.userProfile});
@@ -388,7 +389,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                   wishlistService: wishlistService,
                                   wishlistIds: wishlistIds,
                                   refreshWishlist: refreshWishlist,
-                                  userProfile: userProfile,
+                            
                                 ),
                               ),
                             );

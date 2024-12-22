@@ -22,6 +22,7 @@ class _EditPreferencesScreenState extends State<EditPreferencesScreen> {
   void initState() {
     super.initState();
     _fetchTagsAndPreferences();
+    
   }
 
   Future<void> _fetchTagsAndPreferences() async {
