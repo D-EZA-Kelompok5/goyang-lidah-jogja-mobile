@@ -59,6 +59,6 @@ class ReviewElement {
         "rating": rating,
         "comment": comment,
         "created_at": createdAt.toIso8601String(),
-        "last_edited": lastEdited?.toIso8601String(),
+        "updated_at": lastEdited?.toIso8601String(),
       };
 }

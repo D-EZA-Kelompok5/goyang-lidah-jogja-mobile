@@ -3,21 +3,33 @@
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/menu.dart';
 import 'package:goyang_lidah_jogja/models/review.dart';
-import 'package:goyang_lidah_jogja/screens/submit_review.dart'; // Import halaman Submit Review
+import 'package:goyang_lidah_jogja/models/user_profile.dart';
+import 'package:goyang_lidah_jogja/models/wishlist.dart';
+import 'package:goyang_lidah_jogja/screens/submit_review.dart';
+import 'package:goyang_lidah_jogja/screens/edit_review.dart'; // Import halaman Edit Review
 import 'package:goyang_lidah_jogja/screens/restaurant_detail_menu.dart';
 import 'package:goyang_lidah_jogja/services/restaurant_service.dart';
 import 'package:goyang_lidah_jogja/services/review_service.dart';
+import 'package:goyang_lidah_jogja/services/wishlist_service.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 
 class MenuDetailPage extends StatefulWidget {
   final MenuElement menu;
   final String username;
+  final WishlistService wishlistService;
+  final Map<int, int> wishlistIds;
+  final Function refreshWishlist;
+  final UserProfile? userProfile;
 
   const MenuDetailPage({
     Key? key,
     required this.menu,
     required this.username,
+    required this.wishlistService,
+    required this.wishlistIds,
+    required this.refreshWishlist,
+    this.userProfile,
   }) : super(key: key);
 
   @override
@@ -28,11 +40,13 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   late RestaurantService restaurantService;
   late ReviewService reviewService;
   List<ReviewElement> reviews = [];
+  bool _isInWishlist = false;
 
   @override
   void initState() {
     super.initState();
-    // Inisialisasi RestaurantService dan ReviewService
+    _isInWishlist = widget.wishlistIds.containsKey(widget.menu.id);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final request = Provider.of<CookieRequest>(context, listen: false);
       final baseUrl = 'http://127.0.0.1:8000/'; // Ganti sesuai lingkungan Anda
@@ -51,7 +65,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
         reviews = reviewsData;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).clearSnackBars(); // Hapus SnackBar lama
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal memuat ulasan: $e')),
       );
@@ -73,15 +87,66 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
           ),
         );
       } else {
-        ScaffoldMessenger.of(context).clearSnackBars(); // Hapus SnackBar lama
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Detail restoran tidak ditemukan.')),
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).clearSnackBars(); // Hapus SnackBar lama
+      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal memuat detail restoran: $e')),
+      );
+    }
+  }
+
+  MenuItem menuElementToMenuItem(MenuElement menuElement) {
+    return MenuItem(
+      id: menuElement.id,
+      name: menuElement.name,
+      description: menuElement.description,
+      price: menuElement.price.toDouble(),
+      image: menuElement.image ?? '',
+      restaurantName: menuElement.restaurant.name,
+    );
+  }
+
+  Future<void> _toggleWishlist() async {
+    try {
+      if (_isInWishlist) {
+        final wishlistId = widget.wishlistIds[widget.menu.id];
+        if (wishlistId != null) {
+          await widget.wishlistService.deleteWishlist(
+              wishlistId, widget.wishlistService.request);
+          setState(() {
+            _isInWishlist = false;
+            widget.wishlistIds.remove(widget.menu.id);
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('${widget.menu.name} dihapus dari wishlist.')),
+          );
+        }
+      } else {
+        final wishlistId = await widget.wishlistService.createWishlist(
+          WishlistElement(
+            id: 0,
+            menu: menuElementToMenuItem(widget.menu),
+            catatan: '',
+            status: 'BELUM',
+          ),
+        );
+        setState(() {
+          _isInWishlist = true;
+          widget.wishlistIds[widget.menu.id] = wishlistId;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${widget.menu.name} ditambahkan ke wishlist.')),
+        );
+      }
+      widget.refreshWishlist();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
       );
     }
   }
@@ -98,12 +163,16 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
           },
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.favorite_border, color: Colors.red),
-            onPressed: () {
-              // Wishlist logic placeholder
-            },
-          ),
+          if (widget.userProfile != null &&
+              widget.userProfile!.role == Role.CUSTOMER &&
+              widget.wishlistService.request.loggedIn)
+            IconButton(
+              icon: Icon(
+                _isInWishlist ? Icons.favorite : Icons.favorite_border,
+                color: Colors.red,
+              ),
+              onPressed: _toggleWishlist,
+            ),
         ],
       ),
       body: SingleChildScrollView(
@@ -111,76 +180,51 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image and Details Section
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (widget.menu.image != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: Image.network(
-                      widget.menu.image!,
-                      width: 120,
-                      height: 120,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.grey[200],
-                        child: Icon(
-                          Icons.broken_image,
-                          size: 50,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 16.0),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        widget.menu.name,
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      InkWell(
-                        onTap: () => _navigateToRestaurant(context),
-                        child: Text(
-                          widget.menu.restaurant.name,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8.0),
-                      Text(
-                        'Rp ${widget.menu.price.toStringAsFixed(2)}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.network(
+                widget.menu.image ?? '',
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: Colors.grey[200],
+                  child: Icon(Icons.broken_image, size: 100, color: Colors.grey),
                 ),
-              ],
+              ),
             ),
-            const SizedBox(height: 16.0),
-
-            // Description Section
+            SizedBox(height: 16.0),
+            Text(
+              widget.menu.name,
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 8.0),
+            InkWell(
+              onTap: () => _navigateToRestaurant(context),
+              child: Text(
+                widget.menu.restaurant.name,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.blue,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            SizedBox(height: 8.0),
+            Text(
+              'Rp ${widget.menu.price.toStringAsFixed(2)}',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.green,
+              ),
+            ),
+            SizedBox(height: 16.0),
             Text(
               widget.menu.description,
-              style: const TextStyle(fontSize: 16),
+              style: TextStyle(fontSize: 16),
             ),
-            const SizedBox(height: 16.0),
-
-            // Tags Section
+            SizedBox(height: 16.0),
             if (widget.menu.tagIds != null && widget.menu.tagIds!.isNotEmpty)
               Wrap(
                 spacing: 8.0,
@@ -197,9 +241,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                 'No tags available',
                 style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
               ),
-            const SizedBox(height: 16.0),
-
-            // Restaurant Information Section
+            SizedBox(height: 16.0),
             Card(
               elevation: 2,
               child: Padding(
@@ -214,7 +256,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 8.0),
+                    SizedBox(height: 8.0),
                     Text(
                       widget.menu.restaurant.address,
                       style: const TextStyle(fontSize: 16),
@@ -223,9 +265,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                 ),
               ),
             ),
-            const SizedBox(height: 16.0),
-
-            // Reviews Section
+            SizedBox(height: 16.0),
             Card(
               elevation: 2,
               child: Padding(
@@ -240,7 +280,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 16.0),
+                    SizedBox(height: 16.0),
                     if (reviews.isNotEmpty)
                       ...reviews.map((review) => ListTile(
                             leading: CircleAvatar(
@@ -254,30 +294,51 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                               children: [
                                 Text('Rating: ${review.rating}'),
                                 Text(review.comment),
-                                Text(
-                                  'Dibuat pada: ${review.createdAt.toLocal().toString().split(' ')[0]}',
-                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                ),
                                 if (review.lastEdited != null)
                                   Text(
                                     'Diedit pada: ${review.lastEdited!.toLocal().toString().split(' ')[0]}',
-                                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
+                                  )
+                                else
+                                  Text(
+                                    'Dibuat pada: ${review.createdAt.toLocal().toString().split(' ')[0]}',
+                                    style: const TextStyle(
+                                        fontSize: 12, color: Colors.grey),
                                   ),
                               ],
                             ),
+                            trailing: (widget.username == review.user)
+                                ? IconButton(
+                                    icon: Icon(Icons.edit, color: Colors.blue),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => EditReviewPage(
+                                            reviewId: review.id,
+                                            menuId: widget.menu.id,
+                                            initialRating: review.rating,
+                                            initialComment: review.comment,
+                                            onReviewEdited: _fetchReviews,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : null,
                           ))
                     else
                       const Text(
                         'Belum ada ulasan.',
-                        style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                        style: TextStyle(
+                            fontSize: 16, fontStyle: FontStyle.italic),
                       ),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 16.0),
-
-            // Submit Review Button
+            SizedBox(height: 16.0),
             Center(
               child: ElevatedButton(
                 onPressed: () async {
@@ -285,7 +346,8 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                     ScaffoldMessenger.of(context).clearSnackBars();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Anda harus login untuk memberikan ulasan.'),
+                        content:
+                            Text('Anda harus login untuk memberikan ulasan.'),
                       ),
                     );
                   } else {
@@ -300,14 +362,14 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                     );
 
                     if (result == true) {
-                      // Jika ulasan berhasil dikirim, fetch ulang ulasan
                       _fetchReviews();
                     }
                   }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                   textStyle: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

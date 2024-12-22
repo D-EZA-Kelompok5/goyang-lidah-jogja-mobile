@@ -43,21 +43,22 @@ class ReviewService {
     }
   }
 
-  // /// Mengedit ulasan
-  // Future<Map<String, dynamic>> editReview(int reviewId, int rating, String comment) async {
-  //   final url = '$baseUrl/ulasGoyangan/edit_review/$reviewId/';
-  //   final response = await request.put(
-  //     url,
-  //     {
-  //       'rating': rating.toString(), // Rating dikirim sebagai string
-  //       'comment': comment,
-  //     },
-  //   );
+   /// Mengedit ulasan yang sudah ada menggunakan POST dengan form-encoded data
+  Future<Map<String, dynamic>> editReview(int reviewId, int rating, String comment) async {
+    final url = '$baseUrl/ulasGoyangan/edit_review/$reviewId/';
+    
+    final response = await request.post(
+      url,
+      {
+        'rating': rating.toString(),
+        'comment': comment,
+      },
+    );
 
-  //   if (response.containsKey('message')) {
-  //     return response;
-  //   } else {
-  //     throw Exception(response['error'] ?? 'Gagal mengedit ulasan');
-  //   }
-  // }
+    if (response.containsKey('message')) {
+      return response;
+    } else {
+      throw Exception(response['error'] ?? 'Gagal mengedit ulasan');
+    }
+  }
 }

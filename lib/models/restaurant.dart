@@ -56,8 +56,6 @@ class Restaurant {
   });
 
   factory Restaurant.fromJson(Map<String, dynamic> json) {
-    // Add debug print
-    print('Processing JSON: $json');
     try {
       return Restaurant(
         id: json["id"],
@@ -70,8 +68,6 @@ class Restaurant {
         owner: Owner.fromJson(json["owner"]),
       );
     } catch (e) {
-      print('Error parsing Restaurant: $e');
-      print('Problematic JSON: $json');
       rethrow;
     }
   }

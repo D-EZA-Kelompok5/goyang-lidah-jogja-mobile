@@ -2,6 +2,7 @@
 
 import 'dart:convert';
 
+import 'package:goyang_lidah_jogja/models/announcement.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import '../models/restaurant.dart';
 import '../models/menu.dart';
@@ -25,7 +26,6 @@ class RestaurantService {
       }
       return [];
     } catch (e) {
-      print('Error fetching restaurants: $e');
       throw Exception('Failed to fetch restaurants: $e');
     }
   }
@@ -38,7 +38,6 @@ class RestaurantService {
       }
       return null;
     } catch (e) {
-      print('Error fetching restaurant detail: $e');
       throw Exception('Failed to fetch restaurant detail: $e');
     }
   }
@@ -54,13 +53,10 @@ class RestaurantService {
       final response = await request.get(endpoint);
       if (response != null && response['menus'] != null) {
         List<dynamic> menusJson = response['menus'];
-        print('Response: $response'); // Add debug print
-        print('Menus JSON: $menusJson');
         return menusJson.map((json) => MenuElement.fromJson(json)).toList();
       }
       return [];
     } catch (e) {
-      print('Error fetching menus: $e');
       throw Exception('Failed to fetch menus: $e');
     }
   }
@@ -74,7 +70,6 @@ class RestaurantService {
       );
       return MenuElement.fromJson(response);
     } catch (e) {
-      print('Error creating menu: $e');
       throw Exception('Failed to create menu: $e');
     }
   }
@@ -94,15 +89,12 @@ class RestaurantService {
         throw Exception('No response received');
       }
 
-      print('Update response: $response');
-
       if (response['status'] == 'success') {
         return MenuElement.fromJson(response);
       } else {
         throw Exception(response['message'] ?? 'Failed to update menu');
       }
     } catch (e) {
-      print('Error updating menu: $e');
       rethrow;
     }
   }
@@ -119,7 +111,6 @@ class RestaurantService {
       }
       return false;
     } catch (e) {
-      print('Error deleting menu: $e');
       throw Exception('Failed to delete menu: $e');
     }
   }
@@ -127,7 +118,8 @@ class RestaurantService {
   // Announcement Operations
   Future<List<Announcement>> fetchAnnouncements(int restaurantId) async {
     try {
-      final response = await request.get('$baseUrl/api/announcement/json/$restaurantId/');
+      final response =
+          await request.get('$baseUrl/api/announcement/json/$restaurantId/');
       if (response != null) {
         // Handle the JSON structure as needed
         // For example:
@@ -138,39 +130,37 @@ class RestaurantService {
       }
       return [];
     } catch (e) {
-      print('Error fetching announcements: $e');
       rethrow;
     }
   }
 
-  Future<bool> createAnnouncement(int restaurantId, Map<String, dynamic> data) async {
+  Future<bool> createAnnouncement(
+      int restaurantId, Map<String, dynamic> data) async {
     try {
-      final response = await request.post('$baseUrl/api/announcement/$restaurantId/create/',
-      jsonEncode(data));
+      final response = await request.post(
+          '$baseUrl/api/announcement/$restaurantId/create/', jsonEncode(data));
       return response != null;
     } catch (e) {
-      print('Error creating announcement: $e');
       rethrow;
     }
   }
 
   Future<bool> updateAnnouncement(int pk, Map<String, dynamic> data) async {
     try {
-      final response = await request.post('$baseUrl/api/announcement/$pk/edit/',
-      jsonEncode(data));
+      final response = await request.post(
+          '$baseUrl/api/announcement/$pk/edit/', jsonEncode(data));
       return response != null;
     } catch (e) {
-      print('Error updating announcement: $e');
       rethrow;
     }
   }
 
   Future<bool> deleteAnnouncement(int pk) async {
     try {
-      final response = await request.post('$baseUrl/api/announcement/$pk/delete/', {'_method': 'DELETE'});
+      final response = await request
+          .post('$baseUrl/api/announcement/$pk/delete/', {'_method': 'DELETE'});
       return response != null;
     } catch (e) {
-      print('Error deleting announcement: $e');
       rethrow;
     }
   }
