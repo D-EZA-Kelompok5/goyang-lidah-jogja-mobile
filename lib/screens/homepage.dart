@@ -218,14 +218,14 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               children: [
                 Icon(Icons.fastfood,
-                    size: 30, color: Colors.deepPurple), // Warna ditambahkan
+                    size: 30, color: Colors.green), 
                 SizedBox(width: 10),
                 Text('GoyangLidahJogja',
-                    style: TextStyle(fontSize: 20, color: Colors.deepPurple)),
+                    style: TextStyle(fontSize: 20, color: Colors.green)),
               ],
             ),
             Icon(Icons.search,
-                color: Colors.deepPurple), // Ikon search dengan warna
+                color: Colors.green), // Ikon search dengan warna
           ],
         ),
         backgroundColor: Colors.white,
