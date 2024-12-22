@@ -55,7 +55,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
     request = Provider.of<CookieRequest>(context, listen: false);
     fetchUserProfile();
     restaurantService = RestaurantService(request);
-    reviewService = ReviewService(request, 'https://127.0.0.1:8000/');
+    reviewService = ReviewService(request, 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/');
     _fetchReviews();
   }
 

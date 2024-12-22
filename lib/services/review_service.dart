@@ -64,7 +64,7 @@ class ReviewService {
 
 Future<Map<String, dynamic>> deleteReview(int reviewId) async {
   final response = await request.post(
-    'https://127.0.0.1:8000/ulasGoyangan/delete_review_json/$reviewId/',
+    'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/ulasGoyangan/delete_review_json/$reviewId/',
     {},
   );
   if (response['message'] == 'Review deleted successfully') {
