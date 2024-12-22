@@ -12,6 +12,7 @@ import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/services/user_service.dart';
 import 'package:goyang_lidah_jogja/widgets/review_card.dart';
+import 'package:goyang_lidah_jogja/screens/edit_review.dart';
 
 class MenuDetailPage extends StatefulWidget {
   final MenuElement menu;
@@ -38,6 +39,9 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   bool _isInWishlist = false;
   UserProfile? userProfile;
   late CookieRequest request;
+
+  String _sortOption = 'latest';
+  double _averageRating = 0.0;
 
   @override
   void initState() {
@@ -71,23 +75,38 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
           userProfile = null;
         });
       }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat profil pengguna: $e')),
-      );
+  
     }
   }
 
   Future<void> _fetchReviews() async {
     try {
       final reviewsData = await reviewService.fetchReviews(widget.menu.id);
+      double totalRating = reviewsData.fold(0, (sum, review) => sum + review.rating);
       setState(() {
         reviews = reviewsData;
+        _averageRating = reviews.isNotEmpty ? totalRating / reviews.length : 0.0;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gagal memuat ulasan.')),
       );
     }
+  }
+
+  void _sortReviews(String option) {
+    setState(() {
+      _sortOption = option;
+      if (option == 'highest') {
+        reviews.sort((a, b) => b.rating.compareTo(a.rating));
+      } else if (option == 'lowest') {
+        reviews.sort((a, b) => a.rating.compareTo(b.rating));
+      } else if (option == 'latest') {
+        reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      } else if (option == 'oldest') {
+        reviews.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      }
+    });
   }
 
   Future<void> _toggleWishlist() async {
@@ -174,6 +193,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   @override
   Widget build(BuildContext context) {
     final username = userProfile?.username ?? 'GUEST';
+    final isGuest = username == 'GUEST';
 
     return Scaffold(
       appBar: AppBar(
@@ -212,13 +232,25 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(
-                    _isInWishlist ? Icons.favorite : Icons.favorite_border,
-                    color: Colors.red,
+                if (!isGuest)
+                  IconButton(
+                    icon: Icon(
+                      _isInWishlist ? Icons.favorite : Icons.favorite_border,
+                      color: Colors.red,
+                    ),
+                    onPressed: _toggleWishlist,
+                  )
+                else
+                  IconButton(
+                    icon: Icon(Icons.favorite_border, color: Colors.grey),
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Anda harus login untuk menggunakan wishlist.'),
+                        ),
+                      );
+                    },
                   ),
-                  onPressed: _toggleWishlist,
-                ),
               ],
             ),
             SizedBox(height: 8.0),
@@ -233,6 +265,11 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                 ),
               ),
             ),
+            SizedBox(height: 4.0),
+            Text(
+              'Alamat: ${widget.menu.restaurant.address}',
+              style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+            ),
             SizedBox(height: 8.0),
             Text(
               'Rp ${widget.menu.price.toStringAsFixed(2)}',
@@ -241,6 +278,11 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                 fontWeight: FontWeight.bold,
                 color: Colors.green,
               ),
+            ),
+            SizedBox(height: 8.0),
+            Text(
+              'Rata-rata Rating: ${_averageRating.toStringAsFixed(1)}',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 16.0),
             Text(
@@ -252,6 +294,32 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
               'Ulasan Pengguna',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+            DropdownButton<String>(
+              value: _sortOption,
+              items: const [
+                DropdownMenuItem(
+                  value: 'latest',
+                  child: Text('Terbaru'),
+                ),
+                DropdownMenuItem(
+                  value: 'oldest',
+                  child: Text('Terlama'),
+                ),
+                DropdownMenuItem(
+                  value: 'highest',
+                  child: Text('Rating Tertinggi'),
+                ),
+                DropdownMenuItem(
+                  value: 'lowest',
+                  child: Text('Rating Terendah'),
+                ),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  _sortReviews(value);
+                }
+              },
+            ),
             ...reviews.map((review) => ReviewCard(
                   review: review,
                   canEdit: username == review.user,
@@ -259,13 +327,17 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => SubmitReviewPage(
+                        builder: (context) => EditReviewPage(
+                          reviewId: review.id,
                           menuId: widget.menu.id,
-                          username: username,
+                          initialRating: review.rating,
+                          initialComment: review.comment,
+                          onReviewEdited: _fetchReviews, // Refresh ulasan setelah edit selesai
                         ),
                       ),
-                    ).then((_) => _fetchReviews());
+                    );
                   },
+
                   onDelete: () async {
                     try {
                       await reviewService.deleteReview(review.id);
@@ -310,7 +382,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
+                  backgroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
                   shape: RoundedRectangleBorder(

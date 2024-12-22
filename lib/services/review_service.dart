@@ -74,5 +74,19 @@ Future<Map<String, dynamic>> deleteReview(int reviewId) async {
   }
 }
 
+Future<Review> fetchUserReviews() async {
+  final url = '$baseUrl/ulasGoyangan/my_reviews_json/';
+  final response = await request.get(url);
+
+  if (response.containsKey('user_reviews') && response['user_reviews'] != null) {
+    // Gunakan Review.fromJson untuk parsing data
+    return Review.fromJson({
+      "reviews": response['user_reviews'],
+    });
+  } else {
+    throw Exception(response['error'] ?? 'Gagal memuat ulasan pengguna');
+  }
+}
+
 
 }

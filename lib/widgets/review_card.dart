@@ -38,6 +38,11 @@ class ReviewCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8.0),
+            Text(
+              'Dibuat pada: ${review.createdAt.toLocal()}',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 8.0),
             Text(review.comment),
             if (canEdit)
               Row(

@@ -10,6 +10,8 @@ import 'package:goyang_lidah_jogja/screens/homepage.dart';
 import 'package:goyang_lidah_jogja/screens/edit_profile.dart';
 import 'package:goyang_lidah_jogja/services/user_service.dart';
 import 'package:goyang_lidah_jogja/screens/wishlist_list.dart';
+import 'package:goyang_lidah_jogja/screens/myreview_screen.dart';
+
 
 class LeftDrawer extends StatefulWidget {
   final VoidCallback onWishlistChanged;
@@ -185,16 +187,16 @@ class _LeftDrawerState extends State<LeftDrawer> {
 
             // 4. My Reviews
             ListTile(
-              leading: const Icon(Icons.rate_review),
-              title: const Text('My Reviews'),
-              onTap: () {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("My Reviews button pressed")),
-                );
-                Navigator.pop(context); // Tutup drawer
-              },
-            ),
+            leading: const Icon(Icons.rate_review),
+            title: const Text('My Reviews'),
+            onTap: () {
+              Navigator.pop(context); // Tutup drawer
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const MyReviewsPage()),
+              );
+            },
+          ),
 
             // 5. Logout
             ListTile(
