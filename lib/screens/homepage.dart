@@ -11,6 +11,7 @@ import 'package:goyang_lidah_jogja/models/menu.dart';
 import '../services/wishlist_service.dart'; // Service untuk add to wishlist
 
 class MyHomePage extends StatefulWidget {
+  
   final UserProfile? userProfile;
 
   const MyHomePage({super.key, this.userProfile});
@@ -272,12 +273,15 @@ Future<void> _toggleWishlist(MenuElement menu) async {
                   final menu = menus[index];
                   final isInWishlist = wishlistIds.containsKey(menu.id);
 
-                  return GestureDetector(
+                    return GestureDetector(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => MenuDetailPage(menu: menu),
+                          builder: (context) => MenuDetailPage(
+                            menu: menu,
+                            username: userProfile?.username ?? "GUEST", // Jika userProfile null, gunakan "GUEST"
+                          ),
                         ),
                       );
                     },
