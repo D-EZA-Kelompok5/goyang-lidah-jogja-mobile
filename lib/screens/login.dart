@@ -1,5 +1,3 @@
-// lib/screens/login.dart
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/register.dart';
@@ -7,6 +5,7 @@ import 'package:goyang_lidah_jogja/screens/homepage.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
+import '../providers/user_provider.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -19,13 +18,8 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  // Variabel untuk menyimpan UserProfile
-  UserProfile? userProfile;
-
   @override
   Widget build(BuildContext context) {
-    final request = context.watch<CookieRequest>();
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Login'),
@@ -83,9 +77,9 @@ class _LoginPageState extends State<LoginPage> {
                       String username = _usernameController.text;
                       String password = _passwordController.text;
 
-                      // Autentikasi menggunakan pbp_django_auth
+                      final request = context.read<CookieRequest>();
                       final response = await request.login(
-                          "https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/auth/login/", {
+                          "https://127.0.0.1:8000/auth/login/", {
                         'username': username,
                         'password': password,
                       });
@@ -94,80 +88,43 @@ class _LoginPageState extends State<LoginPage> {
                         String message = response['message'];
                         String uname = response['username'];
 
-                        // Ambil UserProfile setelah login berhasil
-                        AuthService authService = AuthService(request);
-                        UserProfile? profile = await authService.getUserProfile();
+                        // Update UserProvider
+                        UserProvider userProvider = context.read<UserProvider>();
+                        await userProvider.refreshUserProfile();
 
-                        if (profile != null) {
-                          setState(() {
-                            userProfile = profile;
-                          });
-
-                          if (context.mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      MyHomePage(userProfile: userProfile!)),
+                        if (context.mounted) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => MyHomePage()),
+                          );
+                          ScaffoldMessenger.of(context)
+                            ..hideCurrentSnackBar()
+                            ..showSnackBar(
+                              SnackBar(
+                                  content:
+                                      Text("$message Selamat datang, $uname.")),
                             );
-                            ScaffoldMessenger.of(context)
-                              ..hideCurrentSnackBar()
-                              ..showSnackBar(
-                                SnackBar(
-                                    content:
-                                        Text("$message Selamat datang, $uname.")),
-                              );
-                          }
-                        } else {
-                          // Handle gagal mengambil profil
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content: Text("Gagal mengambil profil.")));
                         }
                       } else {
-                        if (context.mounted) {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Login Gagal'),
-                              content: Text(response['message']),
-                              actions: [
-                                TextButton(
-                                  child: const Text('OK'),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                ),
-                              ],
-                            ),
-                          );
-                        }
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(response['message'] ?? 'Login gagal!'),
+                          ),
+                        );
                       }
                     },
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 50),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                    ),
                     child: const Text('Login'),
                   ),
-                  const SizedBox(height: 36.0),
-                  GestureDetector(
-                    onTap: () {
+                  const SizedBox(height: 12.0),
+                  TextButton(
+                    onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(
-                            builder: (context) => const RegisterPage()),
+                        MaterialPageRoute(builder: (context) => const RegisterPage()),
                       );
                     },
-                    child: Text(
-                      'Don\'t have an account? Register',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 16.0,
-                      ),
-                    ),
+                    child: const Text('Don\'t have an account? Register'),
                   ),
                 ],
               ),

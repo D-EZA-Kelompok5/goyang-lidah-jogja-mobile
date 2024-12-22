@@ -11,7 +11,7 @@ import '../models/announcement.dart';
 
 class RestaurantService {
   final CookieRequest request;
-  static const String baseUrl = 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/restaurant';
+  static const String baseUrl = 'https://127.0.0.1:8000/restaurant';
 
   RestaurantService(this.request);
 

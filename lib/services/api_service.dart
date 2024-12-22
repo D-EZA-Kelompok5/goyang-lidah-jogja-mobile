@@ -2,10 +2,10 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/menu.dart'; // Path ke file model
 
-const baseUrl = 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id';
+const baseUrl = 'https://127.0.0.1:8000/';
 
 // Future<List<Menu>> fetchMenus() async {
-//   final response = await http.get(Uri.parse('https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/api/menus/'));
+//   final response = await http.get(Uri.parse('https://127.0.0.1:8000/api/menus/'));
 
 //   if (response.statusCode == 200) {
 //     List<dynamic> data = jsonDecode(response.body);
