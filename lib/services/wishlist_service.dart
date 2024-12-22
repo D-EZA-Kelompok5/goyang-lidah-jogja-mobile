@@ -8,7 +8,7 @@ class WishlistService {
   WishlistService(this.request);
 
   Future<List<WishlistElement>> fetchWishlists(CookieRequest request) async {
-    final response = await request.get('http://127.0.0.1:8000/wishlist/json');
+    final response = await request.get('https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/wishlist/json');
 
     if (response == null || response is! Map<String, dynamic>) {
       throw Exception('Failed to load wishlists: response is invalid');
@@ -32,7 +32,7 @@ class WishlistService {
     };
 
     final response = await request.postJson(
-      'http://127.0.0.1:8000/wishlist/create-wishlist-flutter/',
+      'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/wishlist/create-wishlist-flutter/',
       jsonEncode(data),
     );
 
@@ -55,7 +55,7 @@ class WishlistService {
     };
 
     final url =
-        'http://127.0.0.1:8000/wishlist/update-wishlist-flutter/${wishlist.id}/';
+        'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/wishlist/update-wishlist-flutter/${wishlist.id}/';
     final response = await request.postJson(
       url,
       jsonEncode(data),
@@ -73,7 +73,7 @@ class WishlistService {
 
   Future<void> deleteWishlist(int wishlistId, CookieRequest request) async {
     final url =
-        'http://127.0.0.1:8000/wishlist/delete-wishlist-flutter/$wishlistId/';
+        'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/wishlist/delete-wishlist-flutter/$wishlistId/';
 
     final data = {
       'action': 'delete',

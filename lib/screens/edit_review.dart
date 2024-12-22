@@ -47,7 +47,7 @@ class _EditReviewPageState extends State<EditReviewPage> {
       });
 
       final request = Provider.of<CookieRequest>(context, listen: false);
-      final reviewService = ReviewService(request, 'http://127.0.0.1:8000/'); // Ganti sesuai dengan baseUrl Anda
+      final reviewService = ReviewService(request, 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/'); // Ganti sesuai dengan baseUrl Anda
 
       try {
         final response = await reviewService.editReview(widget.reviewId, _rating, _comment);
