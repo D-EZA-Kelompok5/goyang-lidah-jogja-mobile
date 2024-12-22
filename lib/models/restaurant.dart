@@ -68,8 +68,6 @@ class Restaurant {
         owner: Owner.fromJson(json["owner"]),
       );
     } catch (e) {
-      print('Error parsing Restaurant: $e');
-      print('Problematic JSON: $json');
       rethrow;
     }
   }

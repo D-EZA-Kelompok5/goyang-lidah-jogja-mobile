@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/screens/restaurant_detail_menu.dart';
+import 'package:goyang_lidah_jogja/widgets/left_drawer.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../models/restaurant.dart';
@@ -29,7 +30,6 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage> {
     try {
       return await _restaurantService.fetchUserRestaurants();
     } catch (e) {
-      print('Error fetching restaurants: $e');
       rethrow;
     }
   }
@@ -39,6 +39,7 @@ class _RestaurantDashboardPageState extends State<RestaurantDashboardPage> {
     final request = context.watch<CookieRequest>();
 
     return Scaffold(
+      drawer: LeftDrawer(onWishlistChanged: () => {}),
       appBar: AppBar(
         title: const Text(
           'Your Restaurants',

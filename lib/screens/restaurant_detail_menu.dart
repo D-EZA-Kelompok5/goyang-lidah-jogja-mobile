@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/announcement.dart';
 import 'package:goyang_lidah_jogja/screens/menu_create_edit.dart';
+import 'package:goyang_lidah_jogja/widgets/left_drawer.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
 import '../models/restaurant.dart';
@@ -144,6 +145,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: LeftDrawer(onWishlistChanged: () => {_refreshData}),
       appBar: AppBar(
         title: const Text('Restaurant Details'),
         backgroundColor: Theme.of(context).primaryColor,
@@ -298,7 +300,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
               }
 
               if (snapshot.hasError) {
-                print('Error in FutureBuilder: ${snapshot.error}');
+                // print('Error in FutureBuilder: ${snapshot.error}');
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
 
@@ -330,7 +332,6 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     );
   }
 
-  // Modify _buildMenuItem to handle both owner and non-owner views
   Widget _buildMenuItem(MenuElement menu) {
     Widget menuContent = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -830,8 +831,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                   );
                 }
               } catch (e) {
-                print(
-                    'Error ${announcement != null ? 'updating' : 'creating'} announcement: $e');
+                // print('Error ${announcement != null ? 'updating' : 'creating'} announcement: $e');
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
