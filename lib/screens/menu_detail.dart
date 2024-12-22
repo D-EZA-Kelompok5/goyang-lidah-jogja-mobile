@@ -1,35 +1,30 @@
-// lib/screens/menu_detail_page.dart
-
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/menu.dart';
 import 'package:goyang_lidah_jogja/models/review.dart';
 import 'package:goyang_lidah_jogja/models/user_profile.dart';
 import 'package:goyang_lidah_jogja/models/wishlist.dart';
 import 'package:goyang_lidah_jogja/screens/submit_review.dart';
-import 'package:goyang_lidah_jogja/screens/edit_review.dart'; // Import halaman Edit Review
 import 'package:goyang_lidah_jogja/screens/restaurant_detail_menu.dart';
 import 'package:goyang_lidah_jogja/services/restaurant_service.dart';
 import 'package:goyang_lidah_jogja/services/review_service.dart';
 import 'package:goyang_lidah_jogja/services/wishlist_service.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:provider/provider.dart';
+import 'package:goyang_lidah_jogja/services/user_service.dart';
+import 'package:goyang_lidah_jogja/widgets/review_card.dart';
 
 class MenuDetailPage extends StatefulWidget {
   final MenuElement menu;
-  final String username;
   final WishlistService wishlistService;
   final Map<int, int> wishlistIds;
   final Function refreshWishlist;
-  final UserProfile? userProfile;
 
   const MenuDetailPage({
     Key? key,
     required this.menu,
-    required this.username,
     required this.wishlistService,
     required this.wishlistIds,
     required this.refreshWishlist,
-    this.userProfile,
   }) : super(key: key);
 
   @override
@@ -41,24 +36,45 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   late ReviewService reviewService;
   List<ReviewElement> reviews = [];
   bool _isInWishlist = false;
-
-  String _sortOption = 'latest';
-  int? _filterRating;
+  UserProfile? userProfile;
+  late CookieRequest request;
 
   @override
   void initState() {
     super.initState();
     _isInWishlist = widget.wishlistIds.containsKey(widget.menu.id);
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final request = Provider.of<CookieRequest>(context, listen: false);
-      final baseUrl = 'http://127.0.0.1:8000/'; // Ganti sesuai lingkungan Anda
-      setState(() {
-        restaurantService = RestaurantService(request);
-        reviewService = ReviewService(request, baseUrl);
-      });
-      _fetchReviews();
-    });
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    request = Provider.of<CookieRequest>(context, listen: false);
+    fetchUserProfile();
+    restaurantService = RestaurantService(request);
+    reviewService = ReviewService(request, 'http://127.0.0.1:8000/');
+    _fetchReviews();
+  }
+
+  Future<void> fetchUserProfile() async {
+    if (!mounted) return;
+
+    try {
+      UserProfile profile = await UserService(request).fetchUserProfile();
+      if (mounted) {
+        setState(() {
+          userProfile = profile;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          userProfile = null;
+        });
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memuat profil pengguna: $e')),
+      );
+    }
   }
 
   Future<void> _fetchReviews() async {
@@ -68,76 +84,10 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
         reviews = reviewsData;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat ulasan: $e')),
+        const SnackBar(content: Text('Gagal memuat ulasan.')),
       );
     }
-  }
-
-  void _sortReviews(String option) {
-    setState(() {
-      _sortOption = option;
-      if (option == 'highest') {
-        reviews.sort((a, b) => b.rating.compareTo(a.rating));
-      } else if (option == 'lowest') {
-        reviews.sort((a, b) => a.rating.compareTo(b.rating));
-      } else if (option == 'latest') {
-        reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      } else if (option == 'oldest') {
-        reviews.sort((a, b) => a.createdAt.compareTo(b.createdAt));
-      }
-    });
-  }
-
-  void _filterReviews(int? rating) {
-    setState(() {
-      _filterRating = rating;
-      if (rating != null) {
-        reviews = reviews.where((review) => review.rating == rating).toList();
-      } else {
-        _fetchReviews();
-      }
-    });
-  }
-
-  Future<void> _navigateToRestaurant(BuildContext context) async {
-    try {
-      final restaurant =
-          await restaurantService.fetchRestaurantDetail(widget.menu.restaurant.id);
-      if (restaurant != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RestaurantDetailPage(
-              restaurantId: restaurant.id,
-              isOwner: false,
-            ),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Detail restoran tidak ditemukan.')),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).clearSnackBars();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memuat detail restoran: $e')),
-      );
-    }
-  }
-
-  MenuItem menuElementToMenuItem(MenuElement menuElement) {
-    return MenuItem(
-      id: menuElement.id,
-      name: menuElement.name,
-      description: menuElement.description,
-      price: menuElement.price.toDouble(),
-      image: menuElement.image ?? '',
-      restaurantName: menuElement.restaurant.name,
-    );
   }
 
   Future<void> _toggleWishlist() async {
@@ -179,29 +129,61 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
       );
     }
   }
+
+  MenuItem menuElementToMenuItem(MenuElement menuElement) {
+    return MenuItem(
+      id: menuElement.id,
+      name: menuElement.name,
+      description: menuElement.description,
+      price: menuElement.price.toDouble(),
+      image: menuElement.image ?? '',
+      restaurantName: menuElement.restaurant.name,
+    );
+  }
+
+  Future<void> _navigateToRestaurant(BuildContext context) async {
+    try {
+      final restaurant =
+          await restaurantService.fetchRestaurantDetail(widget.menu.restaurant.id);
+      if (restaurant != null) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RestaurantDetailPage(
+              restaurantId: restaurant.id,
+              isOwner: false,
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Detail restoran tidak ditemukan.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Gagal memuat detail restoran: $e')),
+      );
+    }
+  }
+
+  Future<void> _reloadMenuDetail() async {
+    await _fetchReviews();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final username = userProfile?.username ?? 'GUEST';
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Detail Menu: ${widget.menu.name}'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context);
+            Navigator.popUntil(context, (route) => route.isFirst);
           },
         ),
-        actions: [
-          if (widget.userProfile != null &&
-              widget.userProfile!.role == Role.CUSTOMER &&
-              widget.wishlistService.request.loggedIn)
-            IconButton(
-              icon: Icon(
-                _isInWishlist ? Icons.favorite : Icons.favorite_border,
-                color: Colors.red,
-              ),
-              onPressed: _toggleWishlist,
-            ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -222,9 +204,22 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
               ),
             ),
             SizedBox(height: 16.0),
-            Text(
-              widget.menu.name,
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.menu.name,
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    _isInWishlist ? Icons.favorite : Icons.favorite_border,
+                    color: Colors.red,
+                  ),
+                  onPressed: _toggleWishlist,
+                ),
+              ],
             ),
             SizedBox(height: 8.0),
             InkWell(
@@ -253,178 +248,49 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
               style: TextStyle(fontSize: 16),
             ),
             SizedBox(height: 16.0),
-            if (widget.menu.tagIds != null && widget.menu.tagIds!.isNotEmpty)
-              Wrap(
-                spacing: 8.0,
-                children: widget.menu.tagIds!.map((tagId) {
-                  return Chip(
-                    label: Text('Tag ID: $tagId'),
-                    backgroundColor: Colors.grey[200],
-                    labelStyle: const TextStyle(color: Colors.black),
-                  );
-                }).toList(),
-              )
-            else
-              const Text(
-                'No tags available',
-                style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
-              ),
-            SizedBox(height: 16.0),
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Lokasi',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 8.0),
-                    Text(
-                      widget.menu.restaurant.address,
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ],
-                ),
-              ),
+            const Text(
+              'Ulasan Pengguna',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 16.0),
-            Card(
-              elevation: 2,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Ulasan Pengguna',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            ...reviews.map((review) => ReviewCard(
+                  review: review,
+                  canEdit: username == review.user,
+                  onEdit: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SubmitReviewPage(
+                          menuId: widget.menu.id,
+                          username: username,
+                        ),
+                      ),
+                    ).then((_) => _fetchReviews());
+                  },
+                  onDelete: () async {
+                    try {
+                      await reviewService.deleteReview(review.id);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SuccessScreen(
+                            onBack: () => Navigator.popUntil(context, (route) => route.isFirst),
                           ),
                         ),
-                        Row(
-                          children: [
-                            DropdownButton<int?>(
-                              hint: const Text('Filter Bintang'),
-                              value: _filterRating,
-                              items: [
-                                for (int i = 1; i <= 5; i++)
-                                  DropdownMenuItem(
-                                    value: i,
-                                    child: Text('Bintang $i'),
-                                  ),
-                              ],
-                              onChanged: (value) {
-                                _filterReviews(value);
-                              },
-                            ),
-                            DropdownButton<String>(
-                              value: _sortOption,
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'latest',
-                                  child: Text('Terbaru'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'oldest',
-                                  child: Text('Terlama'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'highest',
-                                  child: Text('Rating Tertinggi'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'lowest',
-                                  child: Text('Rating Terendah'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                if (value != null) {
-                                  _sortReviews(value);
-                                }
-                              },
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 16.0),
-                    if (reviews.isNotEmpty)
-                      ...reviews.map((review) => ListTile(
-                            leading: CircleAvatar(
-                              child: Text(review.user.isNotEmpty
-                                  ? review.user[0].toUpperCase()
-                                  : '?'),
-                            ),
-                            title: Text(review.user),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Rating: ${review.rating}'),
-                                Text(review.comment),
-                                if (review.lastEdited != null)
-                                  Text(
-                                    'Diedit pada: ${review.lastEdited!.toLocal().toString().split(' ')[0]}',
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.grey),
-                                  )
-                                else
-                                  Text(
-                                    'Dibuat pada: ${review.createdAt.toLocal().toString().split(' ')[0]}',
-                                    style: const TextStyle(
-                                        fontSize: 12, color: Colors.grey),
-                                  ),
-                              ],
-                            ),
-                            trailing: (widget.username == review.user)
-                                ? IconButton(
-                                    icon: Icon(Icons.edit, color: Colors.blue),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => EditReviewPage(
-                                            reviewId: review.id,
-                                            menuId: widget.menu.id,
-                                            initialRating: review.rating,
-                                            initialComment: review.comment,
-                                            onReviewEdited: _fetchReviews,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  )
-                                : null,
-                          ))
-                    else
-                      const Text(
-                        'Belum ada ulasan.',
-                        style: TextStyle(
-                            fontSize: 16, fontStyle: FontStyle.italic),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            SizedBox(height: 16.0),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Gagal menghapus ulasan: $e')),
+                      );
+                    }
+                  },
+                )),
             Center(
               child: ElevatedButton(
                 onPressed: () async {
-                  if (widget.username == "GUEST") {
-                    ScaffoldMessenger.of(context).clearSnackBars();
+                  if (username == "GUEST") {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content:
-                            Text('Anda harus login untuk memberikan ulasan.'),
+                        content: Text('Anda harus login untuk memberikan ulasan.'),
                       ),
                     );
                   } else {
@@ -433,7 +299,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                       MaterialPageRoute(
                         builder: (context) => SubmitReviewPage(
                           menuId: widget.menu.id,
-                          username: widget.username,
+                          username: username,
                         ),
                       ),
                     );
@@ -447,16 +313,47 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                   backgroundColor: Colors.blue,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                  textStyle: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
                 child: const Text('Ulas Goyangan'),
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class SuccessScreen extends StatelessWidget {
+  final VoidCallback onBack;
+
+  const SuccessScreen({Key? key, required this.onBack}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Hapus Berhasil'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: onBack,
+        ),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              'Ulasan berhasil dihapus!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: onBack,
+              child: const Text('Kembali ke Halaman Utama'),
             ),
           ],
         ),

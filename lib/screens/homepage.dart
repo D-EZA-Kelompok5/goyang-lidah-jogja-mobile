@@ -386,11 +386,10 @@ class _MyHomePageState extends State<MyHomePage> {
                               MaterialPageRoute(
                                 builder: (context) => MenuDetailPage(
                                   menu: menu,
-                                  username: userProfile?.username?? 'GUEST',
                                   wishlistService: wishlistService,
                                   wishlistIds: wishlistIds,
                                   refreshWishlist: refreshWishlist,
-                                  userProfile: userProfile,
+                            
                                 ),
                               ),
                             );
