@@ -13,7 +13,7 @@ class ReviewService {
 
   /// Mengirim ulasan baru
   Future<Map<String, dynamic>> submitReview(int menuId, int rating, String comment) async {
-    final url = '$baseUrl/ulasGoyangan/submit_review/$menuId/';
+    final url = '$baseUrl/ulasGoyangan/submit_review_json/$menuId/';
     final response = await request.post(
       url,
       {
@@ -31,7 +31,7 @@ class ReviewService {
 
   /// Mengambil daftar ulasan untuk sebuah menu
   Future<List<ReviewElement>> fetchReviews(int menuId) async {
-    final url = '$baseUrl/ulasGoyangan/menu/$menuId/comments/';
+    final url = '$baseUrl/ulasGoyangan/menu_json/$menuId/comments/';
     final response = await request.get(url);
 
     if (response.containsKey('reviews')) {
@@ -45,7 +45,7 @@ class ReviewService {
 
    /// Mengedit ulasan yang sudah ada menggunakan POST dengan form-encoded data
   Future<Map<String, dynamic>> editReview(int reviewId, int rating, String comment) async {
-    final url = '$baseUrl/ulasGoyangan/edit_review/$reviewId/';
+    final url = '$baseUrl/ulasGoyangan/edit_review_json/$reviewId/';
     
     final response = await request.post(
       url,

@@ -42,6 +42,9 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
   List<ReviewElement> reviews = [];
   bool _isInWishlist = false;
 
+  String _sortOption = 'latest';
+  int? _filterRating;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +73,32 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
         SnackBar(content: Text('Gagal memuat ulasan: $e')),
       );
     }
+  }
+
+  void _sortReviews(String option) {
+    setState(() {
+      _sortOption = option;
+      if (option == 'highest') {
+        reviews.sort((a, b) => b.rating.compareTo(a.rating));
+      } else if (option == 'lowest') {
+        reviews.sort((a, b) => a.rating.compareTo(b.rating));
+      } else if (option == 'latest') {
+        reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      } else if (option == 'oldest') {
+        reviews.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      }
+    });
+  }
+
+  void _filterReviews(int? rating) {
+    setState(() {
+      _filterRating = rating;
+      if (rating != null) {
+        reviews = reviews.where((review) => review.rating == rating).toList();
+      } else {
+        _fetchReviews();
+      }
+    });
   }
 
   Future<void> _navigateToRestaurant(BuildContext context) async {
@@ -150,7 +179,6 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -273,12 +301,61 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Ulasan Pengguna',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'Ulasan Pengguna',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            DropdownButton<int?>(
+                              hint: const Text('Filter Bintang'),
+                              value: _filterRating,
+                              items: [
+                                for (int i = 1; i <= 5; i++)
+                                  DropdownMenuItem(
+                                    value: i,
+                                    child: Text('Bintang $i'),
+                                  ),
+                              ],
+                              onChanged: (value) {
+                                _filterReviews(value);
+                              },
+                            ),
+                            DropdownButton<String>(
+                              value: _sortOption,
+                              items: const [
+                                DropdownMenuItem(
+                                  value: 'latest',
+                                  child: Text('Terbaru'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'oldest',
+                                  child: Text('Terlama'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'highest',
+                                  child: Text('Rating Tertinggi'),
+                                ),
+                                DropdownMenuItem(
+                                  value: 'lowest',
+                                  child: Text('Rating Terendah'),
+                                ),
+                              ],
+                              onChanged: (value) {
+                                if (value != null) {
+                                  _sortReviews(value);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                     SizedBox(height: 16.0),
                     if (reviews.isNotEmpty)
