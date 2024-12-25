@@ -118,9 +118,10 @@ Aplikasi **GoyangLidahJogja** mengintegrasikan **Django** sebagai backend dan **
 http://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id
 
 
-## Kontak
+## PBP D05 Video Promosi Goyang Lidah Jogja
 
-Jika Anda memiliki pertanyaan atau ingin berkolaborasi dengan kami, jangan ragu untuk menghubungi kami melalui:
-- **Email**: contact@goyanglidahjogja.com
-- **Instagram**: [@GoyangLidahJogja](https://instagram.com/GoyangLidahJogja)
+https://drive.google.com/file/d/1m8LzNJ_Pyn3j58mLc2nlwnFEXUKc6Yu2/view?usp=drivesdk
+
+## Link APK
+https://install.appcenter.ms/orgs/pbp-d05-goyang-lidah-jogja/apps/goyanglidahjogja/distribution_groups/public/releases/1
 
