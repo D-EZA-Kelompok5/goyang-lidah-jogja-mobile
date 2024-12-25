@@ -79,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
 
                       final request = context.read<CookieRequest>();
                       final response = await request.login(
-                          "https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/auth/login/", {
+                          "http://10.0.2.2:8000/auth/login/", {
                         'username': username,
                         'password': password,
                       });

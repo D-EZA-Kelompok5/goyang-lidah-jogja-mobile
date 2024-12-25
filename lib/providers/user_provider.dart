@@ -74,7 +74,7 @@ class UserProvider with ChangeNotifier {
 
   Future<void> logout() async {
     try {
-      await _userService.request.logout('https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/auth/logout/');
+      await _userService.request.logout('http://10.0.2.2:8000/auth/logout/');
       _userProfile = null;
       _userPreferences = [];
       notifyListeners();
