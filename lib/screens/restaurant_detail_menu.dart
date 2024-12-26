@@ -1,5 +1,5 @@
 // lib/screens/restaurant_detail_menu.dart
-
+ 
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/announcement.dart';
 import 'package:goyang_lidah_jogja/screens/menu_create_edit.dart';
@@ -9,21 +9,21 @@ import 'package:provider/provider.dart';
 import '../models/restaurant.dart';
 import '../models/menu.dart';
 import '../services/restaurant_service.dart';
-
+ 
 class RestaurantDetailPage extends StatefulWidget {
   final int restaurantId;
   final bool isOwner;
-
+ 
   const RestaurantDetailPage({
     Key? key,
     required this.restaurantId,
     this.isOwner = false,
   }) : super(key: key);
-
+ 
   @override
   _RestaurantDetailPageState createState() => _RestaurantDetailPageState();
 }
-
+ 
 class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   late RestaurantService _restaurantService;
   String _menuFilter = 'all';
@@ -31,7 +31,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
   Restaurant? _restaurant;
   List<MenuElement> _menus = [];
   List<Announcement> _announcements = [];
-
+ 
   @override
   void initState() {
     super.initState();
@@ -40,14 +40,14 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     _loadData();
     _loadAnnouncements();
   }
-
+ 
   Future<void> _loadData() async {
     try {
       final restaurant =
           await _restaurantService.fetchRestaurantDetail(widget.restaurantId);
       final menus = await _restaurantService.fetchRestaurantMenus(
           widget.restaurantId, _menuFilter);
-
+ 
       if (mounted) {
         setState(() {
           _restaurant = restaurant;
@@ -62,7 +62,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       }
     }
   }
-
+ 
   Future<void> _loadAnnouncements() async {
     try {
       final announcements =
@@ -80,11 +80,11 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       }
     }
   }
-
+ 
   Future<void> _refreshData() async {
     setState(() {});
   }
-
+ 
   Future<void> _deleteMenu(MenuElement menu) async {
     try {
       final confirmed = await showDialog<bool>(
@@ -107,7 +107,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
           ],
         ),
       );
-
+ 
       if (confirmed ?? false) {
         await _restaurantService.deleteMenu(menu.id);
         if (mounted) {
@@ -125,7 +125,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       }
     }
   }
-
+ 
   Future<void> _navigateToMenuForm({MenuElement? menu}) async {
     final result = await Navigator.push(
       context,
@@ -136,12 +136,12 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
         ),
       ),
     );
-
+ 
     if (result == true) {
       _refreshData();
     }
   }
-
+ 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,21 +158,21 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
-
+ 
             if (snapshot.hasError) {
               return Center(
                 child: Text('Error: ${snapshot.error}'),
               );
             }
-
+ 
             if (!snapshot.hasData || snapshot.data == null) {
               return const Center(
                 child: Text('Restaurant not found'),
               );
             }
-
+ 
             final restaurant = snapshot.data!;
-
+ 
             return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,7 +195,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
           : null,
     );
   }
-
+ 
   Widget _buildRestaurantHeader(Restaurant restaurant) {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -224,7 +224,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                     : _buildPlaceholderImage(),
               ),
               const SizedBox(width: 16),
-
+ 
               // Restaurant Info
               Expanded(
                 child: Column(
@@ -270,7 +270,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ),
     );
   }
-
+ 
   Widget _buildMenuSection(Restaurant restaurant) {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -298,24 +298,24 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-
+ 
               if (snapshot.hasError) {
                 // print('Error in FutureBuilder: ${snapshot.error}');
                 return Center(child: Text('Error: ${snapshot.error}'));
               }
-
+ 
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return const Center(
                   child: Text('No menu items found'),
                 );
               }
-
+ 
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 0.8,
+                  childAspectRatio: 0.7,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
@@ -331,89 +331,97 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ),
     );
   }
-
+ 
   Widget _buildMenuItem(MenuElement menu) {
-    Widget menuContent = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Wrap the image in a Container with fixed height instead of AspectRatio
-        Container(
-          height: 160, // Fixed height for image container
-          width: double.infinity,
-          child: menu.image != null
-              ? Image.network(
-                  menu.image!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: InkWell(
+        onTap: () => _showMenuDetail(menu),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Fixed height image container
+            SizedBox(
+              height: 160,
+              width: double.infinity,
+              child: menu.image != null
+                  ? Image.network(
+                      menu.image!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Container(
+                          color: Colors.grey[200],
+                          child: const Icon(
+                            Icons.restaurant,
+                            size: 40,
+                            color: Colors.grey,
+                          ),
+                        );
+                      },
+                    )
+                  : Container(
                       color: Colors.grey[200],
                       child: const Icon(
                         Icons.restaurant,
                         size: 40,
                         color: Colors.grey,
                       ),
-                    );
-                  },
-                )
-              : _buildPlaceholderImage(),
-        ),
-        // Wrap content in Expanded to allow flexible sizing
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min, // Use minimum space needed
-              children: [
-                Text(
-                  menu.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Expanded(
-                  child: Text(
-                    menu.description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Rp ${menu.price.toString()}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Theme.of(context).primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
             ),
-          ),
+            // Menu info
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      menu.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Expanded(
+                      child: Text(
+                        menu.description,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Rp ${menu.price.toString()}',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
-
-    return Card(
-        clipBehavior: Clip.antiAlias,
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: InkWell(
-          onTap: () => _showMenuDetail(menu),
-          child: menuContent,
-        ));
   }
-
+ 
   // Add this new method to show the detailed popup
   void _showMenuDetail(MenuElement menu) {
     showDialog(
@@ -452,7 +460,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                       color: Colors.grey,
                     ),
                   ),
-
+ 
                 // Menu Details
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -490,7 +498,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                         ),
                       ),
                       const SizedBox(height: 24),
-
+ 
                       // Action Buttons - Only visible to owners
                       if (widget.isOwner) ...[
                         const Divider(),
@@ -532,7 +540,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
                           ],
                         ),
                       ],
-
+ 
                       // Close button for non-owners
                       if (!widget.isOwner)
                         Center(
@@ -551,7 +559,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       },
     );
   }
-
+ 
   void _showMenuOptions(MenuElement menu) {
     showModalBottomSheet(
       context: context,
@@ -585,7 +593,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ),
     );
   }
-
+ 
   Widget _buildMenuFilterDropdown() {
     return DropdownButton<String>(
       value: _menuFilter,
@@ -606,7 +614,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ],
     );
   }
-
+ 
   Widget _buildPlaceholderImage() {
     return Container(
       width: 120,
@@ -621,7 +629,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ),
     );
   }
-
+ 
   List<Announcement> _getSortedAnnouncements() {
     List<Announcement> sorted = List.from(_announcements);
     switch (_announcementFilter) {
@@ -637,7 +645,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
     }
     return sorted;
   }
-
+ 
   Widget _buildAnnouncementFilterDropdown() {
     return DropdownButton<String>(
       value: _announcementFilter,
@@ -655,7 +663,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ],
     );
   }
-
+ 
   Widget _buildAnnouncementSection() {
     return Container(
       margin: const EdgeInsets.all(16),
@@ -713,7 +721,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ),
     );
   }
-
+ 
   void _showAnnouncementOptions(Announcement announcement, int index) {
     showModalBottomSheet(
       context: context,
@@ -741,7 +749,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       ),
     );
   }
-
+ 
   Future<void> _deleteAnnouncement(Announcement announcement, int index) async {
     try {
       final confirmed = await showDialog<bool>(
@@ -777,7 +785,7 @@ class _RestaurantDetailPageState extends State<RestaurantDetailPage> {
       );
     }
   }
-
+ 
   void _showCreateAnnouncementDialog(Announcement? announcement) {
     var titleController =
         TextEditingController(text: announcement?.title ?? '');

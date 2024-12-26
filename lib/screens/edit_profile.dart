@@ -19,6 +19,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   bool _isLoading = true;
   late CookieRequest request;
   late UserService userService;
+  List<int?> _selectedTags = [];
 
   final _usernameController = TextEditingController();
   final _bioController = TextEditingController();
@@ -31,6 +32,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     request = Provider.of<CookieRequest>(context, listen: false);
     userService = UserService(request);
     _fetchUserProfile();
+    _fetchUserTags();
+  }
+
+  Future<void> _fetchUserTags() async {
+    if (!mounted) return;
+    try {
+      final userPreferences = await userService.fetchUserPreferences();
+      setState(() {
+        _selectedTags = userPreferences.map((tag) => tag.id).toList();
+      });
+    } catch (e) {
+      print('Failed to fetch user preferences: $e');
+    }
   }
 
   Future<void> _fetchUserProfile() async {
@@ -267,14 +281,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const EditPreferencesScreen()),
-                            );
-                          },
-                          child: const Text('Edit Preferences'),
-                        ),
+  onPressed: () async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditPreferencesScreen(
+        initialTags: _selectedTags,
+      )),
+    );
+    if (result != null) {
+      setState(() => _selectedTags = result);
+    }
+  },
+  child: const Text('Edit Preferences'),
+),
                         ElevatedButton(
                           onPressed: _updateUserProfile,
                           style: ElevatedButton.styleFrom(
