@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/wishlist.dart';
+import 'package:goyang_lidah_jogja/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/menu_detail.dart';
 import 'package:goyang_lidah_jogja/widgets/left_drawer.dart';
@@ -13,10 +14,11 @@ import '../services/api_service.dart';
 import 'package:pbp_django_auth/pbp_django_auth.dart';
 import 'package:goyang_lidah_jogja/models/menu.dart';
 import '../services/wishlist_service.dart';
-import '../providers/user_provider.dart';
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key});
+  final UserProfile? userProfile;
+
+  const MyHomePage({super.key, this.userProfile});
 
   @override
   _MyHomePageState createState() => _MyHomePageState();
@@ -24,22 +26,127 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _searchController = TextEditingController();
-  List<MenuElement> allMenus = []; // Store all menus
-  List<MenuElement> filteredMenus = []; // Store filtered menus
+  List<MenuElement> allMenus = [];
+  List<MenuElement> filteredMenus = [];
   Timer? _debounce;
 
-  bool isLoadingMenus = true; // Status loading untuk menu
+  UserProfile? userProfile;
+  bool isLoading = true;
+  bool isLoadingMenus = true;
   Map<int, int> wishlistIds = {};
 
-  late CookieRequest request; // Menyimpan request untuk auth
+  late CookieRequest request;
   late WishlistService wishlistService;
 
   @override
   void initState() {
     super.initState();
-    _fetchMenus(); // Fetch data menu dari API saat init
-
+    print("Initializing MyHomePage...");
+    request = Provider.of<CookieRequest>(context, listen: false);
+    wishlistService = WishlistService(request);
+    
+    _initializeData();
+    
     _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _initializeData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    print("UserProvider status: ${userProvider.isLoading}");
+
+    // Tunggu sampai UserProvider selesai loading
+    if (userProvider.isLoading) {
+      userProvider.addListener(() {
+        if (!userProvider.isLoading) {
+          _handleUserProfileInitialization();
+        }
+      });
+    } else {
+      _handleUserProfileInitialization();
+    }
+
+    _fetchMenus();
+  }
+
+  void _handleUserProfileInitialization() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (widget.userProfile != null) {
+      print("Using widget userProfile");
+      setState(() {
+        userProfile = widget.userProfile;
+        isLoading = false;
+      });
+      _initializeWishlist();
+    } else if (userProvider.userProfile != null) {
+      print("Using provider userProfile");
+      setState(() {
+        userProfile = userProvider.userProfile;
+        isLoading = false;
+      });
+      _initializeWishlist();
+    } else {
+      print("No user profile found");
+      setState(() {
+        userProfile = null;
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _initializeWishlist() async {
+    if (request.loggedIn) {
+      try {
+        List<WishlistElement> existingWishlists =
+            await wishlistService.fetchWishlists(request);
+
+        setState(() {
+          wishlistIds = {
+            for (var wishlist in existingWishlists) wishlist.menu.id: wishlist.id,
+          };
+        });
+      } catch (e) {
+        print('Error fetching wishlists: $e');
+      }
+    }
+  }
+
+  Future<void> _initializeUserProfile() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (request.loggedIn) {
+      try {
+        // Gunakan refreshUserProfile dari provider
+        await userProvider.refreshUserProfile();
+        List<WishlistElement> existingWishlists = 
+            await wishlistService.fetchWishlists(request);
+
+        if (mounted) {
+          setState(() {
+            userProfile = userProvider.userProfile;
+            wishlistIds = {
+              for (var wishlist in existingWishlists) 
+                wishlist.menu.id: wishlist.id,
+            };
+            isLoading = false;
+          });
+        }
+      } catch (e) {
+        print('Error initializing user profile: $e');
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          userProfile = null;
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -111,13 +218,9 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<void> _toggleWishlist(MenuElement menu, UserProfile? userProfile) async {
-    if (userProfile == null) return;
-
+  Future<void> _toggleWishlist(MenuElement menu) async {
     try {
-      if (!Provider.of<UserProvider>(context, listen: false).isLoading) {
-        if (!request.loggedIn) return;
-      }
+      //final menuItem = menuElementToMenuItem(menu);
 
       if (wishlistIds.containsKey(menu.id)) {
         // Jika sudah ada di wishlist, hapus
@@ -154,29 +257,27 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void refreshWishlist() {
-    // Implement wishlist refresh logic if needed
+    _initializeUserProfile();
   }
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final UserProfile? userProfile = userProvider.userProfile;
-
-    // Initialize WishlistService if user is logged in
-    if (userProfile != null && request == null) {
-      request = Provider.of<CookieRequest>(context, listen: false);
-      wishlistService = WishlistService(request);
-      // Fetch existing wishlists
-      wishlistService.fetchWishlists(request).then((existingWishlists) {
-        setState(() {
-          wishlistIds = {
-            for (var wishlist in existingWishlists) wishlist.menu.id: wishlist.id,
-          };
-        });
-      }).catchError((e) {
-        print('Error fetching wishlists: $e');
-      });
-    }
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        if (isLoading || userProvider.isLoading) {
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text("Loading..."),
+                ],
+              ),
+            ),
+          );
+        }
 
     return Scaffold(
       appBar: AppBar(
@@ -185,19 +286,22 @@ class _MyHomePageState extends State<MyHomePage> {
           children: [
             Row(
               children: [
-                Icon(Icons.fastfood, size: 30, color: Colors.green),
+                Icon(Icons.fastfood,
+                    size: 30, color: Colors.green), // Warna ditambahkan
                 SizedBox(width: 10),
                 Text('GoyangLidahJogja',
                     style: TextStyle(fontSize: 20, color: Colors.green)),
               ],
             ),
-            Icon(Icons.search, color: Colors.green), // Ikon search dengan warna
+            Icon(Icons.search,
+                color: Colors.green), // Ikon search dengan warna
           ],
         ),
         backgroundColor: Colors.white,
         elevation: 2.0, // Bayangan ringan untuk tampilan mobile
       ),
-      drawer: LeftDrawer(onWishlistChanged: refreshWishlist),
+      drawer: LeftDrawer(
+          onWishlistChanged: refreshWishlist), // Pass UserProfile ke LeftDrawer
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -207,11 +311,11 @@ class _MyHomePageState extends State<MyHomePage> {
                 padding: const EdgeInsets.all(16.0),
                 child: Row(
                   children: [
-                    userProfile.profilePicture != null
+                    userProfile!.profilePicture != null
                         ? CircleAvatar(
                             radius: 30,
                             backgroundImage:
-                                NetworkImage(userProfile.profilePicture!),
+                                NetworkImage(userProfile!.profilePicture!),
                           )
                         : const CircleAvatar(
                             radius: 30,
@@ -222,12 +326,12 @@ class _MyHomePageState extends State<MyHomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          userProfile.username,
+                          userProfile!.username,
                           style: const TextStyle(
                               fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         Text(
-                          userProfile.roleDisplay, // Menggunakan getter
+                          userProfile!.roleDisplay, // Menggunakan getter
                           style:
                               TextStyle(fontSize: 14, color: Colors.grey[600]),
                         ),
@@ -304,9 +408,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           const NeverScrollableScrollPhysics(), // Nonaktifkan scroll pada GridView
                       shrinkWrap: true, // Membatasi ukuran GridView
                       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount:
-                            MediaQuery.of(context).size.width > 600 ? 3 : 2,
-                        // Responsiveness
+                        crossAxisCount: MediaQuery.of(context).size.width > 600
+                            ? 3
+                            : 2, // Responsiveness
                         crossAxisSpacing: 15,
                         mainAxisSpacing: 15,
                         childAspectRatio:
@@ -410,7 +514,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                               Role.CUSTOMER)
                                             GestureDetector(
                                               onTap: () =>
-                                                  _toggleWishlist(menu, userProfile),
+                                                  _toggleWishlist(menu),
                                               child: Icon(
                                                 isInWishlist
                                                     ? Icons.favorite
@@ -454,5 +558,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
+    },
+  );
   }
 }

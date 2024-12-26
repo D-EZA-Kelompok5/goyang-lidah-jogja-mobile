@@ -21,7 +21,7 @@ class _MyReviewsPageState extends State<MyReviewsPage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     request = Provider.of<CookieRequest>(context, listen: false);
-    reviewService = ReviewService(request, 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/');
+    reviewService = ReviewService(request, 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id');
     _fetchUserReviews();
   }
 
