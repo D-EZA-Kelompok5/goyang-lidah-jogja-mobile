@@ -33,7 +33,7 @@ class _SubmitReviewPageState extends State<SubmitReviewPage> {
       });
 
       final request = Provider.of<CookieRequest>(context, listen: false);
-      final baseUrl = 'http://10.0.2.2:8000/'; // Ganti sesuai lingkungan Anda
+      final baseUrl = 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id'; // Ganti sesuai lingkungan Anda
       final reviewService = ReviewService(request, baseUrl);
 
       try {

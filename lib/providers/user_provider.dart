@@ -24,12 +24,16 @@ class UserProvider with ChangeNotifier {
   CookieRequest get request => _userService.request;
 
   Future<void> _initializeUser() async {
+    print("Initializing UserProvider..."); // Tambahkan ini
     try {
       _userProfile = await _userService.fetchUserProfile();
+      print("UserProfile fetched: $_userProfile"); // Tambahkan ini
       _userPreferences = await _userService.fetchUserPreferences();
+      print("UserPreferences fetched: $_userPreferences"); // Tambahkan ini
       _isLoading = false;
       notifyListeners();
     } catch (e) {
+      print("Error in _initializeUser: $e"); // Tambahkan ini
       _errorMessage = e.toString();
       _isLoading = false;
       notifyListeners();
@@ -74,7 +78,7 @@ class UserProvider with ChangeNotifier {
 
   Future<void> logout() async {
     try {
-      await _userService.request.logout('http://10.0.2.2:8000/auth/logout/');
+      await _userService.request.logout('https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/auth/logout/');
       _userProfile = null;
       _userPreferences = [];
       notifyListeners();

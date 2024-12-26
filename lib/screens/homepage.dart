@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:goyang_lidah_jogja/models/wishlist.dart';
+import 'package:goyang_lidah_jogja/providers/user_provider.dart';
 import 'package:provider/provider.dart';
 import 'package:goyang_lidah_jogja/screens/menu_detail.dart';
 import 'package:goyang_lidah_jogja/widgets/left_drawer.dart';
@@ -25,27 +26,127 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController _searchController = TextEditingController();
-  List<MenuElement> allMenus = []; // Store all menus
-  List<MenuElement> filteredMenus = []; // Store filtered menus
+  List<MenuElement> allMenus = [];
+  List<MenuElement> filteredMenus = [];
   Timer? _debounce;
 
   UserProfile? userProfile;
   bool isLoading = true;
-
-  // List<MenuElement> menus = []; // Menyimpan data menu dari API
-  bool isLoadingMenus = true; // Status loading untuk menu
+  bool isLoadingMenus = true;
   Map<int, int> wishlistIds = {};
 
-  late CookieRequest request; // Menyimpan request untuk auth
+  late CookieRequest request;
   late WishlistService wishlistService;
 
   @override
   void initState() {
     super.initState();
-    _initializeUserProfile();
-    _fetchMenus(); // Fetch data menu dari API saat init
-
+    print("Initializing MyHomePage...");
+    request = Provider.of<CookieRequest>(context, listen: false);
+    wishlistService = WishlistService(request);
+    
+    _initializeData();
+    
     _searchController.addListener(_onSearchChanged);
+  }
+
+  Future<void> _initializeData() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    print("UserProvider status: ${userProvider.isLoading}");
+
+    // Tunggu sampai UserProvider selesai loading
+    if (userProvider.isLoading) {
+      userProvider.addListener(() {
+        if (!userProvider.isLoading) {
+          _handleUserProfileInitialization();
+        }
+      });
+    } else {
+      _handleUserProfileInitialization();
+    }
+
+    _fetchMenus();
+  }
+
+  void _handleUserProfileInitialization() {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (widget.userProfile != null) {
+      print("Using widget userProfile");
+      setState(() {
+        userProfile = widget.userProfile;
+        isLoading = false;
+      });
+      _initializeWishlist();
+    } else if (userProvider.userProfile != null) {
+      print("Using provider userProfile");
+      setState(() {
+        userProfile = userProvider.userProfile;
+        isLoading = false;
+      });
+      _initializeWishlist();
+    } else {
+      print("No user profile found");
+      setState(() {
+        userProfile = null;
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _initializeWishlist() async {
+    if (request.loggedIn) {
+      try {
+        List<WishlistElement> existingWishlists =
+            await wishlistService.fetchWishlists(request);
+
+        setState(() {
+          wishlistIds = {
+            for (var wishlist in existingWishlists) wishlist.menu.id: wishlist.id,
+          };
+        });
+      } catch (e) {
+        print('Error fetching wishlists: $e');
+      }
+    }
+  }
+
+  Future<void> _initializeUserProfile() async {
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    
+    if (request.loggedIn) {
+      try {
+        // Gunakan refreshUserProfile dari provider
+        await userProvider.refreshUserProfile();
+        List<WishlistElement> existingWishlists = 
+            await wishlistService.fetchWishlists(request);
+
+        if (mounted) {
+          setState(() {
+            userProfile = userProvider.userProfile;
+            wishlistIds = {
+              for (var wishlist in existingWishlists) 
+                wishlist.menu.id: wishlist.id,
+            };
+            isLoading = false;
+          });
+        }
+      } catch (e) {
+        print('Error initializing user profile: $e');
+        if (mounted) {
+          setState(() {
+            isLoading = false;
+          });
+        }
+      }
+    } else {
+      if (mounted) {
+        setState(() {
+          userProfile = null;
+          isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -106,47 +207,6 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  Future<void> _initializeUserProfile() async {
-    request = Provider.of<CookieRequest>(context, listen: false);
-    wishlistService = WishlistService(request);
-
-    if (request.loggedIn) {
-      AuthService authService = AuthService(request);
-      UserProfile? profile = await authService.getUserProfile();
-      List<WishlistElement> existingWishlists =
-          await wishlistService.fetchWishlists(request);
-
-      setState(() {
-        userProfile = profile;
-        wishlistIds = {
-          for (var wishlist in existingWishlists) wishlist.menu.id: wishlist.id,
-        };
-        isLoading = false;
-      });
-    } else {
-      setState(() {
-        userProfile = null;
-        isLoading = false;
-      });
-    }
-  }
-
-  // Future<void> _fetchMenus() async {
-  //   try {
-  //     List<MenuElement> fetchedMenus =
-  //         await fetchMenus(); // Ambil data dari API
-  //     setState(() {
-  //       menus = fetchedMenus;
-  //       isLoadingMenus = false;
-  //     });
-  //   } catch (e) {
-  //     setState(() {
-  //       isLoadingMenus = false;
-  //     });
-  //     print('Error fetching menus: $e');
-  //   }
-  // }
-
   MenuItem menuElementToMenuItem(MenuElement menuElement) {
     return MenuItem(
       id: menuElement.id,
@@ -202,12 +262,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      // Tampilkan indikator loading saat mengambil profil
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    return Consumer<UserProvider>(
+      builder: (context, userProvider, child) {
+        if (isLoading || userProvider.isLoading) {
+          return const Scaffold(
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text("Loading..."),
+                ],
+              ),
+            ),
+          );
+        }
 
     return Scaffold(
       appBar: AppBar(
@@ -217,14 +287,14 @@ class _MyHomePageState extends State<MyHomePage> {
             Row(
               children: [
                 Icon(Icons.fastfood,
-                    size: 30, color: Colors.deepPurple), // Warna ditambahkan
+                    size: 30, color: Colors.green), // Warna ditambahkan
                 SizedBox(width: 10),
                 Text('GoyangLidahJogja',
-                    style: TextStyle(fontSize: 20, color: Colors.deepPurple)),
+                    style: TextStyle(fontSize: 20, color: Colors.green)),
               ],
             ),
             Icon(Icons.search,
-                color: Colors.deepPurple), // Ikon search dengan warna
+                color: Colors.green), // Ikon search dengan warna
           ],
         ),
         backgroundColor: Colors.white,
@@ -488,5 +558,7 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
+    },
+  );
   }
 }

@@ -19,7 +19,10 @@ class MyApp extends StatelessWidget {
           create: (_) => CookieRequest(),
         ),
         ChangeNotifierProvider<UserProvider>(
-          create: (context) => UserProvider(context.read<CookieRequest>()),
+          create: (context) {
+            print("Creating UserProvider..."); // Tambahkan ini
+            return UserProvider(context.read<CookieRequest>());
+          },
         ),
       ],
       child: MaterialApp(
@@ -30,7 +33,12 @@ class MyApp extends StatelessWidget {
           ).copyWith(secondary: const Color(0xFF76C7C0)),
           useMaterial3: true,
         ),
-        home: const MyHomePage(),
+        home: Builder(
+          builder: (context) {
+            print("Building MyHomePage..."); // Tambahkan ini
+            return const MyHomePage();
+          },
+        ),
       ),
     );
   }

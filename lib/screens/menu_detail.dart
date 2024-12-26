@@ -55,7 +55,7 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
     request = Provider.of<CookieRequest>(context, listen: false);
     fetchUserProfile();
     restaurantService = RestaurantService(request);
-    reviewService = ReviewService(request, 'http://10.0.2.2:8000/');
+    reviewService = ReviewService(request, 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id/');
     _fetchReviews();
   }
 
@@ -199,9 +199,9 @@ class _MenuDetailPageState extends State<MenuDetailPage> {
       appBar: AppBar(
         title: Text('Detail Menu: ${widget.menu.name}'),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.popUntil(context, (route) => route.isFirst);
+            Navigator.pop(context);  // Ganti dengan pop() biasa
           },
         ),
       ),

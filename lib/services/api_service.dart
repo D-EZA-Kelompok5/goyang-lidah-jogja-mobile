@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/menu.dart'; // Path ke file model
 
-const baseUrl = 'http://10.0.2.2:8000/';
+const baseUrl = 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id';
 
 // Future<List<Menu>> fetchMenus() async {
 //   final response = await http.get(Uri.parse('https://127.0.0.1:8000/api/menus/'));

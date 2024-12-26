@@ -8,7 +8,7 @@ class UserService {
 
   UserService(this.request);
 
-  final String baseUrl = 'http://127.0.0.1:8000';
+  final String baseUrl = 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id';
 
   Future<UserProfile> fetchUserProfile() async {
     final response = await request.get('$baseUrl/edit_profile/json/');
