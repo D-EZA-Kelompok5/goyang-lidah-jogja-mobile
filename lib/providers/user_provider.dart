@@ -24,18 +24,29 @@ class UserProvider with ChangeNotifier {
   CookieRequest get request => _userService.request;
 
   Future<void> _initializeUser() async {
-    print("Initializing UserProvider..."); // Tambahkan ini
+    print("Initializing UserProvider...");
     try {
+      if (!_userService.request.loggedIn) {
+        print("User not logged in");
+        _isLoading = false;
+        _userProfile = null;
+        notifyListeners();
+        return;
+      }
+
       _userProfile = await _userService.fetchUserProfile();
-      print("UserProfile fetched: $_userProfile"); // Tambahkan ini
+      print("UserProfile fetched: $_userProfile");
+      
       _userPreferences = await _userService.fetchUserPreferences();
-      print("UserPreferences fetched: $_userPreferences"); // Tambahkan ini
+      print("UserPreferences fetched: $_userPreferences");
+      
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      print("Error in _initializeUser: $e"); // Tambahkan ini
+      print("Error in _initializeUser: $e");
       _errorMessage = e.toString();
       _isLoading = false;
+      _userProfile = null;
       notifyListeners();
     }
   }

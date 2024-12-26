@@ -17,23 +17,30 @@ const baseUrl = 'https://vissuta-gunawan-goyanglidahjogja.pbp.cs.ui.ac.id';
 
 Future<List<MenuElement>> fetchMenus() async {
   try {
+    print('Fetching menus from: $baseUrl/api/menus/'); // Debug URL
+
     final response = await http.get(
       Uri.parse('$baseUrl/api/menus/'),
       headers: {
         "Content-Type": "application/json",
+        "Accept": "application/json", // Add Accept header
       },
     );
+
+    print('Response status: ${response.statusCode}'); // Debug status code
+    print('Response body: ${response.body}'); // Debug response body
 
     if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = json.decode(response.body);
       Menu menuData = Menu.fromJson(jsonResponse);
-      print(menuData);
       return menuData.menus;
     } else {
-      throw Exception('Failed to load menus: ${response.statusCode}');
+      throw Exception('Server error: ${response.statusCode}\nBody: ${response.body}');
     }
   } catch (e) {
-    print('Error details: $e');
-    throw Exception('Failed to fetch menus: $e');
+    if (e is FormatException) {
+      print('JSON Parse Error: $e'); // Debug parsing errors
+    }
+    throw Exception('Network error: $e');
   }
 }
