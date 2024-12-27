@@ -12,6 +12,7 @@ import '../screens/wishlist_list.dart';
 import '../screens/myreview_screen.dart';
 import '../models/user_profile.dart';
 import '../services/auth_service.dart';
+import '../screens/event_list_page.dart';
 
 class LeftDrawer extends StatefulWidget {
   final VoidCallback onWishlistChanged;
@@ -110,6 +111,19 @@ class _LeftDrawerState extends State<LeftDrawer> {
               );
             },
           ),
+
+          if (userProfile != null)
+            ListTile(
+              leading: const Icon(Icons.event_note),
+              title: const Text('Events'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const EventListPage()),
+                );
+              },
+            ),
 
           if (userProfile != null) ...[
             if (userProfile!.role == Role.EVENT_MANAGER)
