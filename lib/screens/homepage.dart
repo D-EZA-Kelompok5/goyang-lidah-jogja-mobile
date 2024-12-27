@@ -281,19 +281,22 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Row(
+        title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
-                Icon(Icons.fastfood,
-                    size: 30, color: Colors.green), // Warna ditambahkan
-                SizedBox(width: 10),
-                Text('GoyangLidahJogja',
+                Image.asset(
+                  'assets/images/logo.png',
+                  height: 30,
+                  width: 30,
+                ),
+                const SizedBox(width: 10),
+                const Text('GoyangLidahJogja',
                     style: TextStyle(fontSize: 20, color: Colors.green)),
               ],
             ),
-            Icon(Icons.search,
+            const Icon(Icons.search,
                 color: Colors.green), // Ikon search dengan warna
           ],
         ),
